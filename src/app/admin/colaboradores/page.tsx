@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { NovoColaborador } from "@/components/dash/NovoColaborador";
 import { ArrowRight, UserIcon } from "@/components/icons";
 import {
   minutosTrabalhados,
@@ -46,6 +47,10 @@ export default async function Colaboradores() {
         <h1 className="text-xl font-semibold text-ink">Colaboradores</h1>
         <p className="text-sm text-muted">Horas de hoje por colaborador</p>
       </header>
+
+      <div className="max-w-2xl">
+        <NovoColaborador />
+      </div>
 
       <ul className="flex max-w-2xl flex-col gap-2">
         {(funcionarios ?? []).map((f) => {
