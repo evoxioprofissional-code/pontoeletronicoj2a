@@ -2,20 +2,27 @@
 
 import { useClock } from "@/lib/useClock";
 
-const DATE_FMT = new Intl.DateTimeFormat("pt-BR", {
+const DATA_CURTA = new Intl.DateTimeFormat("pt-BR", {
   weekday: "short",
   day: "2-digit",
   month: "long",
 });
 
-export function LiveClock() {
+const DATA_LONGA = new Intl.DateTimeFormat("pt-BR", {
+  weekday: "long",
+  day: "2-digit",
+  month: "long",
+  year: "numeric",
+});
+
+export function LiveClock({ mostrarData = true }: { mostrarData?: boolean }) {
   const now = useClock();
   const time = now
     ? `${String(now.getHours()).padStart(2, "0")}:${String(
         now.getMinutes(),
       ).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`
     : "--:--:--";
-  const date = now ? DATE_FMT.format(now) : "";
+  const date = now ? DATA_CURTA.format(now) : "";
 
   return (
     <div className="text-center">
@@ -25,7 +32,17 @@ export function LiveClock() {
       <p className="font-mono text-[3.4rem] font-bold leading-none tracking-tight text-ink tabular-nums">
         {time}
       </p>
-      <p className="mt-2 text-sm capitalize text-muted">{date}</p>
+      {mostrarData && (
+        <p className="mt-2 text-sm capitalize text-muted">{date}</p>
+      )}
     </div>
+  );
+}
+
+/** Data por extenso (client, respeita o fuso do usuário). */
+export function DataExtenso() {
+  const now = useClock();
+  return (
+    <span className="capitalize">{now ? DATA_LONGA.format(now) : ""}</span>
   );
 }

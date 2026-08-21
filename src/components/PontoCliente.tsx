@@ -71,6 +71,22 @@ export function PontoCliente({ cerca, temFace, proximoTipo }: Props) {
 
   const podeBater = temFace && geo.fase === "ok" && geo.dentro === true;
 
+  // Permite acionar o fluxo pela barra inferior (botão central).
+  useEffect(() => {
+    const handler = () => {
+      setErro(null);
+      if (!temFace) return setModal("cadastro");
+      if (podeBater) return setModal("ponto");
+      setErro(
+        geo.fase !== "ok"
+          ? "Ative a localização para bater o ponto."
+          : "Aproxime-se da fábrica para registrar o ponto.",
+      );
+    };
+    window.addEventListener("j2a:bater", handler);
+    return () => window.removeEventListener("j2a:bater", handler);
+  }, [temFace, podeBater, geo.fase]);
+
   async function aoCadastrar(descriptor: number[]) {
     setOcupado(true);
     setErro(null);
