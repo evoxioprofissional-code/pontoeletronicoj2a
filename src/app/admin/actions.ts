@@ -2,12 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import type { TipoDB } from "@/lib/ponto";
 
+type DB = ReturnType<typeof createClient>;
+
 /** Garante que o usuário logado é gestor (rh/admin). Retorna id + empresa. */
-async function gestor() {
-  const supabase = createClient();
+async function gestor(supabase: DB) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -21,13 +21,12 @@ async function gestor() {
   return data;
 }
 
-/** Confere que um funcionário pertence à empresa do gestor. */
 async function mesmaEmpresa(
-  admin: ReturnType<typeof createAdminClient>,
+  supabase: DB,
   funcionarioId: string,
   empresaId: string,
 ) {
-  const { data } = await admin
+  const { data } = await supabase
     .from("funcionarios")
     .select("empresa_id")
     .eq("id", funcionarioId)
@@ -36,22 +35,21 @@ async function mesmaEmpresa(
 }
 
 function isoLocal(dia: string, hora: string): string | null {
-  // dia = YYYY-MM-DD, hora = HH:MM  → Date no fuso local
   const d = new Date(`${dia}T${hora}:00`);
   return isNaN(+d) ? null : d.toISOString();
 }
 
 export async function definirCarga(formData: FormData) {
-  const g = await gestor();
+  const supabase = createClient();
+  const g = await gestor(supabase);
   if (!g) return;
   const funcionarioId = String(formData.get("funcionarioId") ?? "");
   const horas = Number(formData.get("horas") ?? 0);
   const minutos = Number(formData.get("minutos") ?? 0);
   const total = Math.max(0, Math.round(horas * 60 + minutos));
 
-  const admin = createAdminClient();
-  if (!(await mesmaEmpresa(admin, funcionarioId, g.empresa_id))) return;
-  await admin
+  if (!(await mesmaEmpresa(supabase, funcionarioId, g.empresa_id))) return;
+  await supabase
     .from("funcionarios")
     .update({ carga_horaria_min: total })
     .eq("id", funcionarioId);
@@ -59,7 +57,8 @@ export async function definirCarga(formData: FormData) {
 }
 
 export async function ajustarMarcacao(formData: FormData) {
-  const g = await gestor();
+  const supabase = createClient();
+  const g = await gestor(supabase);
   if (!g) return;
   const registroId = String(formData.get("registroId") ?? "");
   const dia = String(formData.get("dia") ?? "");
@@ -68,15 +67,14 @@ export async function ajustarMarcacao(formData: FormData) {
   const iso = isoLocal(dia, hora);
   if (!iso) return;
 
-  const admin = createAdminClient();
-  const { data: reg } = await admin
+  const { data: reg } = await supabase
     .from("registros_ponto")
     .select("empresa_id, marcado_em, marcado_em_original")
     .eq("id", registroId)
     .single();
   if (!reg || reg.empresa_id !== g.empresa_id) return;
 
-  await admin
+  await supabase
     .from("registros_ponto")
     .update({
       marcado_em: iso,
@@ -91,7 +89,8 @@ export async function ajustarMarcacao(formData: FormData) {
 }
 
 export async function adicionarMarcacao(formData: FormData) {
-  const g = await gestor();
+  const supabase = createClient();
+  const g = await gestor(supabase);
   if (!g) return;
   const funcionarioId = String(formData.get("funcionarioId") ?? "");
   const tipo = String(formData.get("tipo") ?? "") as TipoDB;
@@ -100,9 +99,8 @@ export async function adicionarMarcacao(formData: FormData) {
   const iso = isoLocal(dia, hora);
   if (!iso) return;
 
-  const admin = createAdminClient();
-  if (!(await mesmaEmpresa(admin, funcionarioId, g.empresa_id))) return;
-  await admin.from("registros_ponto").insert({
+  if (!(await mesmaEmpresa(supabase, funcionarioId, g.empresa_id))) return;
+  await supabase.from("registros_ponto").insert({
     empresa_id: g.empresa_id,
     funcionario_id: funcionarioId,
     tipo,
@@ -118,16 +116,16 @@ export async function adicionarMarcacao(formData: FormData) {
 }
 
 export async function excluirMarcacao(formData: FormData) {
-  const g = await gestor();
+  const supabase = createClient();
+  const g = await gestor(supabase);
   if (!g) return;
   const registroId = String(formData.get("registroId") ?? "");
-  const admin = createAdminClient();
-  const { data: reg } = await admin
+  const { data: reg } = await supabase
     .from("registros_ponto")
     .select("empresa_id")
     .eq("id", registroId)
     .single();
   if (!reg || reg.empresa_id !== g.empresa_id) return;
-  await admin.from("registros_ponto").delete().eq("id", registroId);
+  await supabase.from("registros_ponto").delete().eq("id", registroId);
   revalidatePath("/admin", "layout");
 }

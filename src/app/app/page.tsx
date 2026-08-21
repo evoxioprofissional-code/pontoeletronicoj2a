@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { LiveClock, DataExtenso } from "@/components/LiveClock";
 import { PontoCliente } from "@/components/PontoCliente";
 import { BottomNav } from "@/components/BottomNav";
@@ -103,8 +102,7 @@ export default async function AppHome() {
   const trabalhado = minutosTrabalhados(marcacoes);
   const carga = func.carga_horaria_min ?? 480;
 
-  const admin = createAdminClient();
-  const { data: bio } = await admin
+  const { data: bio } = await supabase
     .from("biometria_facial")
     .select("funcionario_id")
     .eq("funcionario_id", func.id)

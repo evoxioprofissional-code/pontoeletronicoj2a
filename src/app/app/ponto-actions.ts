@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { avaliarCerca } from "@/lib/geo";
 import { compararFace } from "@/lib/face/descriptor";
 import { proximoTipo, limitesDoDia, type TipoDB } from "@/lib/ponto";
@@ -38,9 +37,9 @@ export async function registrarFace(
   if (!func) return { error: "Sessão expirada. Entre novamente." };
 
   try {
-    const admin = createAdminClient();
+    const supabase = createClient();
     const agora = new Date().toISOString();
-    const { error } = await admin.from("biometria_facial").upsert({
+    const { error } = await supabase.from("biometria_facial").upsert({
       funcionario_id: func.id,
       template: JSON.stringify(descriptor),
       consentimento_em: agora,
@@ -48,7 +47,7 @@ export async function registrarFace(
     });
     if (error) return { error: `Falha ao salvar: ${error.message}` };
 
-    await admin.from("consentimentos").insert({
+    await supabase.from("consentimentos").insert({
       funcionario_id: func.id,
       finalidade: "biometria_ponto",
       aceito: true,
@@ -111,8 +110,7 @@ export async function baterPonto(p: PunchPayload): Promise<PunchResult> {
   }
 
   // 2) Rosto — compara com o template cadastrado (servidor)
-  const admin = createAdminClient();
-  const { data: bio } = await admin
+  const { data: bio } = await supabase
     .from("biometria_facial")
     .select("template")
     .eq("funcionario_id", func.id)

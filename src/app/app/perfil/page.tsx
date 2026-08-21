@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { BottomNav } from "@/components/BottomNav";
 import { ArrowLeft, LogoutIcon, ShieldIcon, PinIcon } from "@/components/icons";
 import { sair } from "../actions";
@@ -45,8 +44,7 @@ export default async function Perfil() {
     .limit(1)
     .maybeSingle();
 
-  const admin = createAdminClient();
-  const { data: bio } = await admin
+  const { data: bio } = await supabase
     .from("biometria_facial")
     .select("funcionario_id")
     .eq("funcionario_id", func.id)

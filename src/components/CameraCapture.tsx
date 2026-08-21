@@ -105,13 +105,17 @@ export function CameraCapture({
             className="h-full w-full scale-x-[-1] object-cover"
           />
 
-          {/* Guia oval + anel de scan */}
-          <div className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            <div className="relative h-[240px] w-[190px]">
+          {/* Guia oval + anel de scan — grande, relativo ao viewfinder */}
+          <div className="pointer-events-none absolute inset-x-[10%] top-[7%] bottom-[13%]">
+            <div className="relative h-full w-full">
               {fase === "pronto" && (
                 <div className="absolute inset-0 rounded-[50%] border-2 border-amber/70 animate-scan-ring" />
               )}
-              <div className="absolute inset-0 rounded-[50%] border-2 border-dashed border-ink/50" />
+              <div
+                className={`absolute inset-0 rounded-[50%] border-[3px] border-dashed ${
+                  fase === "erro" ? "border-danger/70" : "border-ink/60"
+                }`}
+              />
             </div>
           </div>
 
