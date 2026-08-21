@@ -36,15 +36,16 @@ export default function LoginPage() {
         <form action={formAction} className="flex flex-col gap-4">
           <label className="flex flex-col gap-1.5">
             <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
-              Matrícula
+              E-mail
             </span>
             <input
-              name="matricula"
-              inputMode="numeric"
+              name="email"
+              type="email"
+              inputMode="email"
               autoComplete="username"
               required
-              className="w-full rounded-xl border border-steel-line bg-steel px-4 py-3.5 font-mono text-lg text-ink placeholder:text-muted focus:border-amber focus:outline-none"
-              placeholder="00000"
+              className="w-full rounded-xl border border-steel-line bg-steel px-4 py-3.5 text-lg text-ink placeholder:text-muted focus:border-amber focus:outline-none"
+              placeholder="voce@empresa.com"
             />
           </label>
 
