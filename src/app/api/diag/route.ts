@@ -9,9 +9,10 @@ export async function GET() {
   return Response.json({
     hasUrl: url.length > 0,
     urlHost: url || null,
-    hasAnon: anon.length > 0,
     anonLen: anon.length,
-    hasService: service.length > 0,
+    anon, // chave anon é pública — usada para comparação exata
     serviceLen: service.length,
+    serviceHead: service.slice(0, 8),
+    serviceTail: service.slice(-6),
   });
 }
