@@ -20,7 +20,7 @@ const NAV: { grupo: string; itens: Item[] }[] = [
       { label: "Solicitações", href: "/admin/em-breve?secao=Solicita%C3%A7%C3%B5es" },
       { label: "Controle de Ponto", href: "/admin/colaboradores" },
       { label: "Férias", href: "/admin/em-breve?secao=F%C3%A9rias" },
-      { label: "Locais", href: "/admin/em-breve?secao=Locais" },
+      { label: "Locais", href: "/admin/cerca" },
     ],
   },
   {
@@ -47,7 +47,7 @@ const NAV: { grupo: string; itens: Item[] }[] = [
     grupo: "Gestão de Eventos",
     itens: [
       { label: "Lista de eventos", href: "/admin/em-breve?secao=Lista+de+eventos" },
-      { label: "Cerca virtual", href: "/admin/em-breve?secao=Cerca+virtual" },
+      { label: "Cerca virtual", href: "/admin/cerca" },
     ],
   },
   {
