@@ -31,26 +31,32 @@ export async function registrarFace(
   descriptor: number[],
 ): Promise<FaceResult> {
   if (!Array.isArray(descriptor) || descriptor.length !== 128) {
-    return { error: "Captura inválida. Tente novamente." };
+    const n = Array.isArray(descriptor) ? descriptor.length : "n/a";
+    return { error: `Captura inválida (pontos: ${n}). Tente novamente.` };
   }
   const func = await funcionarioAtual();
   if (!func) return { error: "Sessão expirada. Entre novamente." };
 
-  const admin = createAdminClient();
-  const agora = new Date().toISOString();
-  const { error } = await admin.from("biometria_facial").upsert({
-    funcionario_id: func.id,
-    template: JSON.stringify(descriptor),
-    consentimento_em: agora,
-    atualizado_em: agora,
-  });
-  if (error) return { error: "Falha ao salvar o rosto." };
+  try {
+    const admin = createAdminClient();
+    const agora = new Date().toISOString();
+    const { error } = await admin.from("biometria_facial").upsert({
+      funcionario_id: func.id,
+      template: JSON.stringify(descriptor),
+      consentimento_em: agora,
+      atualizado_em: agora,
+    });
+    if (error) return { error: `Falha ao salvar: ${error.message}` };
 
-  await admin.from("consentimentos").insert({
-    funcionario_id: func.id,
-    finalidade: "biometria_ponto",
-    aceito: true,
-  });
+    await admin.from("consentimentos").insert({
+      funcionario_id: func.id,
+      finalidade: "biometria_ponto",
+      aceito: true,
+    });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "desconhecido";
+    return { error: `Erro interno: ${msg}` };
+  }
 
   revalidatePath("/app");
   return { ok: true };
