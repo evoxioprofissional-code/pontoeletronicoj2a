@@ -20,20 +20,22 @@ Mockup navegável das 7 telas dentro do phone frame (validação de design).
 - ⏳ Aplicar migrations no Supabase e validar leitura/escrita
 - ⏳ Repositório no GitHub
 
-### Fase 2 — Autenticação e sessão ⬜
-- Login por **matrícula + senha** (mapeado para Supabase Auth)
-- Middleware de sessão, rotas protegidas, cadastro de funcionário pelo RH
-- Vincular `auth.users` ↔ `funcionarios`
+### Fase 2 — Autenticação e sessão ✅
+- Login por **matrícula + senha** (mapeado para Supabase Auth via e-mail sintético)
+- Middleware de sessão, rotas protegidas (`/app`, `/admin`)
+- Provisionamento de logins (`scripts/provisionar-usuarios.mjs`)
 
-### Fase 3 — Fluxo de ponto real ⬜
-- Registrar marcação real na Home (grava em `registros_ponto`)
-- Geofence real: GPS do dispositivo + validação **no servidor**
-- Histórico e horas a partir do banco
-- Comprovante de marcação ao trabalhador
-
-### Fase 4 — Reconhecimento facial ⬜
-- Captura on-device + **prova de vida / anti-spoofing**
-- Cadastro do template facial (com consentimento) e verificação na marcação
+### Fase 3 — Fluxo de ponto real + facial + geofence + admin 🚧
+- ✅ Registrar marcação real (grava em `registros_ponto`, tipo cíclico)
+- ✅ **Geofence** real: GPS do dispositivo + validação **no servidor**
+- ✅ **Reconhecimento facial** on-device (face-api, modelos locais); descritor
+  comparado **no servidor**; cadastro do rosto com consentimento
+- ✅ Horas do dia + meta (carga horária) a partir do banco
+- ✅ **Painel do admin**: lista, horas por pessoa, ajustar/adicionar/excluir
+  marcações, definir carga horária diária
+- ✅ **PWA** instalável (adicionar à tela inicial)
+- ⏳ Aplicar migration `0003_ponto_admin.sql` e testar no celular real
+- ⚠️ Falta **prova de vida / anti-spoofing** no facial (fase de conformidade)
 
 ### Fase 5 — Conformidade REP-P ⬜
 - Geração de **AFD** e **AEJ** nos layouts oficiais
