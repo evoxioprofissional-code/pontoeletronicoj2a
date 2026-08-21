@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: #0d0f13;
+  color: #edeff2;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Textura sutil de fundo do palco (fora da moldura) — grade técnica discreta */
+.stage-bg {
+  background-color: #0d0f13;
+  background-image:
+    radial-gradient(circle at 50% 0%, rgba(245, 166, 35, 0.05), transparent 55%),
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 100% 100%, 32px 32px, 32px 32px;
+}
+
+/* Foco visível e consistente em todo o protótipo (acessibilidade) */
+:focus-visible {
+  outline: 2px solid #f5a623;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Esconde a barra de rolagem dentro da tela do celular, mantendo o scroll */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Respeita a preferência de menos movimento: mantém o essencial, corta o teatro */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .stamp-el {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: rotate(-3deg) !important;
+  }
+}
