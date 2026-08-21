@@ -42,7 +42,7 @@ export function LiveClock({ mostrarData = true }: { mostrarData?: boolean }) {
 /** Data por extenso (client, respeita o fuso do usuário). */
 export function DataExtenso() {
   const now = useClock();
-  return (
-    <span className="capitalize">{now ? DATA_LONGA.format(now) : ""}</span>
-  );
+  if (!now) return <span />;
+  const s = DATA_LONGA.format(now);
+  return <span>{s.charAt(0).toUpperCase() + s.slice(1)}</span>;
 }
