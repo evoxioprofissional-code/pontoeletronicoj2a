@@ -157,7 +157,7 @@ export async function baterPonto(p: PunchPayload): Promise<PunchResult> {
     })
     .select("tipo, marcado_em")
     .single();
-  if (error) return { error: "Falha ao registrar o ponto." };
+  if (error) return { error: `Falha ao registrar: ${error.message}` };
 
   revalidatePath("/app");
   return {
