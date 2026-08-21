@@ -94,10 +94,10 @@ export default async function AdminFuncionario({
     offset === 0 ? "Hoje" : offset === -1 ? "Ontem" : DATA_FMT.format(selData);
 
   return (
-    <main className="stage-bg mx-auto flex min-h-screen w-full max-w-2xl flex-col gap-5 px-5 py-8">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-5 px-5 py-8">
       <header className="flex items-center gap-3">
         <Link
-          href="/admin"
+          href="/admin/colaboradores"
           className="flex h-10 w-10 items-center justify-center rounded-xl bg-steel text-ink ring-1 ring-steel-line"
           aria-label="Voltar"
         >
@@ -299,6 +299,6 @@ export default async function AdminFuncionario({
           </button>
         </form>
       </section>
-    </main>
+    </div>
   );
 }
