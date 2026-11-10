@@ -68,9 +68,9 @@ export function FuncionarioView({
         Colaboradores
       </Link>
 
-      <header className="mb-6 flex items-center gap-4">
+      <header className="mb-6 flex flex-wrap items-center gap-4">
         <Avatar nome={func.nome} tamanho="lg" />
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <h1 className="truncate text-2xl font-semibold tracking-tight text-ink">
             {func.nome}
           </h1>
@@ -79,6 +79,12 @@ export function FuncionarioView({
             {func.cargo ? ` · ${func.cargo}` : ""}
           </p>
         </div>
+        <Link
+          href={`/admin/espelho/${func.id}?mes=${dia.slice(0, 7)}`}
+          className={botao("secundario")}
+        >
+          Espelho do mês
+        </Link>
       </header>
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_19rem] lg:items-start lg:gap-6">

@@ -1,5 +1,6 @@
+import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
-import { Cartao, Etiqueta } from "@/components/ui";
+import { Cartao, Etiqueta, botao } from "@/components/ui";
 import {
   minutosTrabalhados,
   formatarMinutos,
@@ -45,11 +46,16 @@ export function RegistrosView({ nome, gestor, dias, hoje }: RegistrosViewProps) 
 
   return (
     <AppShell nome={nome} gestor={gestor} abaAtiva="/app/registros">
-      <header className="mb-5 md:mb-7">
-        <p className="text-sm text-ink-3">{mes}</p>
-        <h1 className="mt-0.5 text-2xl font-semibold tracking-tight text-ink md:text-[1.75rem]">
-          Meus registros
-        </h1>
+      <header className="mb-5 flex flex-wrap items-end justify-between gap-x-6 gap-y-3 md:mb-7">
+        <div>
+          <p className="text-sm text-ink-3">{mes}</p>
+          <h1 className="mt-0.5 text-2xl font-semibold tracking-tight text-ink md:text-[1.75rem]">
+            Meus registros
+          </h1>
+        </div>
+        <Link href="/app/espelho" className={botao("secundario")}>
+          Espelho e banco de horas
+        </Link>
       </header>
 
       <Cartao className="mb-4 grid grid-cols-2 divide-x divide-line">

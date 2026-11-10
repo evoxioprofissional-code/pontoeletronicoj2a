@@ -14,7 +14,13 @@ import { AdminShell } from "@/components/dash/AdminShell";
 import { NovoColaborador } from "@/components/dash/NovoColaborador";
 import { PreviaCliente } from "./PreviaCliente";
 import LoginPage from "@/app/login/page";
-import { computarMetricas, type FuncLite, type RegLite } from "@/lib/metrics";
+import { BancoHorasView } from "@/components/views/admin/BancoHorasView";
+import { RelatoriosView } from "@/components/views/admin/RelatoriosView";
+import { EspelhoView } from "@/components/views/EspelhoView";
+import { montarPainel } from "@/lib/painel";
+import { equipeExemplo } from "@/lib/dados-exemplo";
+import { calcularMes } from "@/lib/banco";
+import type { MarcacaoBanco } from "@/lib/relatorios";
 import {
   dataLocal,
   minutosTrabalhados,
@@ -48,27 +54,6 @@ const DIAS: DiaRegistro[] = [
   { chave: diaMenos(4), marcacoes: marc(diaMenos(4), ["08:11", "11:58", "12:59", "17:30"]) },
 ];
 
-const FUNCS: FuncLite[] = [
-  { id: "1", nome: "Maurício Coura", cargo: "Operador de máquinas", carga_horaria_min: 480, ativo: true },
-  { id: "2", nome: "Jucelino Batista de Araújo", cargo: "Soldador", carga_horaria_min: 480, ativo: true },
-  { id: "3", nome: "Carla Andrade", cargo: "Almoxarifado", carga_horaria_min: 360, ativo: true },
-  { id: "4", nome: "Rita Medeiros", cargo: "Recursos Humanos", carga_horaria_min: 480, ativo: true },
-  { id: "5", nome: "Paulo Dantas", cargo: "Expedição", carga_horaria_min: 480, ativo: false },
-];
-
-const REGS: RegLite[] = FUNCS.slice(0, 4).flatMap((f, fi) =>
-  [1, 2, 3, 4, 5, 6].flatMap((n) =>
-    marc(diaMenos(n), [
-      "08:0" + fi,
-      "12:00",
-      "13:0" + fi,
-      n % 3 === fi % 3 ? "19:1" + fi : "17:0" + (n % 6),
-    ])
-      .slice(0, n === 2 && fi === 1 ? 3 : 4)
-      .map((m) => ({ funcionario_id: f.id, ...m })),
-  ),
-);
-
 const TELAS = [
   "home",
   "home-novo",
@@ -83,6 +68,9 @@ const TELAS = [
   "login",
   "admin",
   "admin-vazio",
+  "admin-banco",
+  "admin-espelho",
+  "admin-relatorios",
   "admin-colaboradores",
   "admin-novo",
   "admin-funcionario",
@@ -209,30 +197,69 @@ export default function Previa({ params }: { params: { tela: string } }) {
     case "login":
       return <LoginPage />;
 
-    case "admin":
+    case "admin": {
+      const agora = new Date();
+      const { pessoas, registros } = equipeExemplo(agora);
       return (
         <AdminShell rotaAtiva="/admin">
           <DashboardView
             empresa="J2A Indústria"
-            periodo="01/11/2026 a 30/11/2026"
-            m={computarMetricas(FUNCS, REGS, [
-              { status: "pendente" },
-              { status: "pendente" },
-              { status: "aprovado" },
-            ])}
+            mesAtual={hoje.slice(0, 7)}
+            hoje={hoje}
+            d={montarPainel(pessoas, registros, hoje.slice(0, 7), agora)}
           />
         </AdminShell>
       );
-    case "admin-vazio":
+    }
+    case "admin-vazio": {
+      const agora = new Date();
+      const pessoas = equipeExemplo(agora).pessoas.slice(0, 3);
       return (
         <AdminShell rotaAtiva="/admin">
           <DashboardView
             empresa="J2A Indústria"
-            periodo="01/11/2026 a 30/11/2026"
-            m={computarMetricas([], [], [])}
+            mesAtual={hoje.slice(0, 7)}
+            hoje={hoje}
+            d={montarPainel(pessoas, new Map(), hoje.slice(0, 7), agora)}
           />
         </AdminShell>
       );
+    }
+    case "admin-banco":
+    case "admin-espelho":
+    case "admin-relatorios": {
+      const agora = new Date();
+      const { pessoas, registros } = equipeExemplo(agora);
+      const mes = hoje.slice(0, 7);
+      const linhas = pessoas.map((p, i) => ({
+        pessoa: { ...p, matricula: String(4870 + i).padStart(5, "0"), cargo: "Produção" },
+        banco: calcularMes(mes, (registros.get(p.id) ?? []) as MarcacaoBanco[], p.cargaMin, agora),
+      }));
+      return (
+        <AdminShell rotaAtiva={params.tela === "admin-relatorios" ? "/admin/relatorios" : "/admin/banco-horas"}>
+          {params.tela === "admin-banco" ? (
+            <BancoHorasView mes={mes} mesAtual={mes} linhas={linhas} />
+          ) : params.tela === "admin-relatorios" ? (
+            <RelatoriosView
+              mes={mes}
+              mesAtual={mes}
+              pessoas={linhas.map((l) => l.pessoa)}
+            />
+          ) : (
+            <EspelhoView
+              empresa={{ nome: "J2A Indústria", cnpj: "12.345.678/0001-90" }}
+              pessoa={linhas[0].pessoa}
+              banco={linhas[0].banco}
+              mesAtual={mes}
+              hoje={hoje}
+              base="/dev/ui/admin-espelho"
+              voltar={{ href: "/dev/ui/admin-banco", rotulo: "Banco de horas" }}
+              corrigirBase="/admin/funcionario/1"
+            />
+          )}
+        </AdminShell>
+      );
+    }
     case "admin-colaboradores":
       return (
         <AdminShell rotaAtiva="/admin/colaboradores">

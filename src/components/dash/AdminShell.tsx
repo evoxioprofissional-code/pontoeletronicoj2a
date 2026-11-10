@@ -4,7 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { Marca } from "@/components/Logo";
-import { ArrowLeft, ChartIcon, PinIcon, UsersIcon } from "@/components/icons";
+import {
+  ArrowLeft,
+  ChartIcon,
+  ClockIcon,
+  ListIcon,
+  PinIcon,
+  UsersIcon,
+} from "@/components/icons";
 
 // Só entra no menu o que já funciona. Módulos futuros voltam quando existirem.
 const ITENS = [
@@ -15,6 +22,13 @@ const ITENS = [
     Icone: UsersIcon,
     tambem: "/admin/funcionario",
   },
+  {
+    href: "/admin/banco-horas",
+    rotulo: "Banco de horas",
+    Icone: ClockIcon,
+    tambem: "/admin/espelho",
+  },
+  { href: "/admin/relatorios", rotulo: "Relatórios", Icone: ListIcon },
   { href: "/admin/cerca", rotulo: "Local da fábrica", Icone: PinIcon },
 ] as const;
 
@@ -35,9 +49,9 @@ export function AdminShell({
         ("tambem" in it && atual.startsWith(it.tambem));
 
   return (
-    <div className="min-h-screen bg-paper lg:flex">
+    <div className="min-h-screen bg-paper lg:flex print:block print:bg-white">
       {/* Barra lateral — computador */}
-      <aside className="hidden w-60 shrink-0 border-r border-line bg-surface lg:block">
+      <aside className="hidden w-60 shrink-0 border-r border-line bg-surface lg:block print:!hidden">
         <div className="sticky top-0 flex h-screen flex-col">
           <div className="flex h-16 items-center px-5">
             <Link href="/admin" aria-label="Painel do RH — visão geral">
@@ -84,7 +98,7 @@ export function AdminShell({
 
       <div className="min-w-0 flex-1">
         {/* Topo — celular e tablet */}
-        <header className="safe-t sticky top-0 z-30 bg-surface shadow-bar lg:hidden">
+        <header className="safe-t sticky top-0 z-30 bg-surface shadow-bar lg:hidden print:hidden">
           <div className="flex h-14 items-center justify-between px-4 sm:px-6">
             <Link href="/admin" className="flex items-center gap-2.5">
               <Marca />
@@ -125,7 +139,7 @@ export function AdminShell({
           </nav>
         </header>
 
-        <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:px-10 lg:py-9">
+        <main className="mx-auto w-full max-w-[92rem] px-4 py-6 sm:px-6 lg:px-8 lg:py-8 2xl:px-12 print:max-w-none print:p-0">
           {children}
         </main>
       </div>

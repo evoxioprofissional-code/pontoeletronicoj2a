@@ -67,6 +67,17 @@ body {
   padding-top: env(safe-area-inset-top);
 }
 
+/* Impressão (espelho de ponto): folha branca, margens de papel */
+@page {
+  margin: 14mm;
+}
+@media print {
+  html,
+  body {
+    background: #ffffff !important;
+  }
+}
+
 /* Respeita quem prefere menos movimento */
 @media (prefers-reduced-motion: reduce) {
   *,

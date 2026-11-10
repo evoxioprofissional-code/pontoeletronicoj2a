@@ -36,8 +36,8 @@ export function AppShell({
     href === "/app" ? atual === "/app" : atual.startsWith(href);
 
   return (
-    <div className="min-h-screen bg-paper">
-      <header className="safe-t sticky top-0 z-30 bg-surface shadow-bar">
+    <div className="min-h-screen bg-paper print:bg-white">
+      <header className="safe-t sticky top-0 z-30 bg-surface shadow-bar print:hidden">
         <div className="mx-auto flex h-14 max-w-5xl items-center gap-6 px-4 sm:px-6">
           <Link href="/app" aria-label="j2aponto — início" className="shrink-0">
             <Marca />
@@ -83,13 +83,13 @@ export function AppShell({
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 pb-28 pt-5 sm:px-6 md:pb-12 md:pt-8">
+      <main className="mx-auto max-w-5xl px-4 pb-28 pt-5 sm:px-6 md:pb-12 md:pt-8 print:max-w-none print:p-0">
         {children}
       </main>
 
       <nav
         aria-label="Principal"
-        className="safe-b fixed inset-x-0 bottom-0 z-30 bg-surface shadow-sheet md:hidden"
+        className="safe-b fixed inset-x-0 bottom-0 z-30 bg-surface shadow-sheet md:hidden print:hidden"
       >
         <ul className="mx-auto flex max-w-md">
           {ABAS.map(({ href, rotulo, Icone }) => {
