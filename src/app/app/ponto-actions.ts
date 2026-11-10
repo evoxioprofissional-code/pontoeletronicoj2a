@@ -4,7 +4,14 @@ import { revalidatePath } from "next/cache";
 import { createClient, usuarioAtual } from "@/lib/supabase/server";
 import { melhorCerca } from "@/lib/geo";
 import { compararFace } from "@/lib/face/descriptor";
-import { proximoTipo, limitesDoDia, type TipoDB } from "@/lib/ponto";
+import {
+  proximoTipo,
+  limitesDoDia,
+  esperaProximaMarcacao,
+  rotuloTipo,
+  horaLocal,
+  type TipoDB,
+} from "@/lib/ponto";
 
 async function funcionarioAtual() {
   const supabase = createClient();
@@ -118,6 +125,16 @@ export async function baterPonto(p: PunchPayload): Promise<PunchResult> {
   if (errCtx) return { error: `Falha ao consultar: ${errCtx.message}` };
   if (!func) return { error: "Funcionário não encontrado." };
 
+  // 0) Anti-duplicidade — bloqueia marcações em sequência (toque duplo/reenvio)
+  const hoje = (func.hoje ?? []) as { tipo: TipoDB; marcado_em: string }[];
+  const ultima = hoje[hoje.length - 1];
+  const espera = esperaProximaMarcacao(ultima?.marcado_em);
+  if (ultima && espera > 0) {
+    return {
+      error: `Você já registrou ${rotuloTipo(ultima.tipo)} às ${horaLocal(ultima.marcado_em)}. Aguarde ${espera} s para a próxima marcação.`,
+    };
+  }
+
   // 1) Geofence — valida no servidor (com tolerância limitada da precisão do GPS)
   const empresa = umOuNulo(func.empresa as unknown as { cercas: CercaRow[] } | null);
   const cercas = (empresa?.cercas ?? []) as CercaRow[];
@@ -147,7 +164,7 @@ export async function baterPonto(p: PunchPayload): Promise<PunchResult> {
   }
 
   // 3) Próximo tipo de marcação (a partir do dia)
-  const tipos = ((func.hoje ?? []) as { tipo: TipoDB }[]).map((r) => r.tipo);
+  const tipos = hoje.map((r) => r.tipo);
   const tipo = proximoTipo(tipos);
 
   // 4) Grava (hash/NSR são selados pelo trigger)

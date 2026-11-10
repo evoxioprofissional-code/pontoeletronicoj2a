@@ -48,3 +48,35 @@ export async function extrairDescritor(
   if (!deteccao) return null;
   return Array.from(deteccao.descriptor);
 }
+
+/**
+ * Leitura rápida do rosto (sem descritor) para a prova de vida: mede o quanto
+ * o nariz está deslocado em relação aos olhos. Retorna null se não há rosto.
+ */
+export async function lerRosto(
+  video: HTMLVideoElement,
+): Promise<import("./liveness").LeituraRosto | null> {
+  const faceapi = await getFaceApi();
+  const options = new faceapi.TinyFaceDetectorOptions({
+    inputSize: 224,
+    scoreThreshold: 0.5,
+  });
+  const det = await faceapi.detectSingleFace(video, options).withFaceLandmarks();
+  if (!det) return null;
+
+  // Modelo de 68 pontos: 36 e 45 = cantos externos dos olhos; 30 = ponta do nariz.
+  const p = det.landmarks.positions;
+  const olhoA = p[36];
+  const olhoB = p[45];
+  const nariz = p[30];
+  const entreOlhos = olhoB.x - olhoA.x;
+  if (!(entreOlhos > 1)) return null;
+
+  const box = det.detection.box;
+  return {
+    desvio: (nariz.x - olhoA.x) / entreOlhos - 0.5,
+    cx: box.x + box.width / 2,
+    cy: box.y + box.height / 2,
+    largura: box.width,
+  };
+}

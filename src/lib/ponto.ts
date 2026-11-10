@@ -28,6 +28,24 @@ export function proximoTipo(tiposDoDia: TipoDB[]): TipoDB {
   return CICLO[(i + 1) % CICLO.length];
 }
 
+/**
+ * Intervalo mínimo entre duas marcações do mesmo funcionário. Evita o ponto
+ * duplicado por toque duplo / reenvio (ex.: entrada e início de intervalo com
+ * segundos de diferença).
+ */
+export const INTERVALO_MIN_MARCACOES_S = 60;
+
+/** Segundos que ainda faltam para liberar a próxima marcação (0 = liberado). */
+export function esperaProximaMarcacao(
+  ultimaIso: string | null | undefined,
+  agora: Date = new Date(),
+): number {
+  if (!ultimaIso) return 0;
+  const passados = (+agora - +new Date(ultimaIso)) / 1000;
+  if (passados < 0) return INTERVALO_MIN_MARCACOES_S;
+  return Math.max(0, Math.ceil(INTERVALO_MIN_MARCACOES_S - passados));
+}
+
 export type Status = "off" | "working" | "break";
 
 export function statusDe(tiposDoDia: TipoDB[]): Status {
