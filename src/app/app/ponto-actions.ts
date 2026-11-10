@@ -1,16 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
-import { avaliarCerca } from "@/lib/geo";
+import { createClient, usuarioAtual } from "@/lib/supabase/server";
+import { melhorCerca } from "@/lib/geo";
 import { compararFace } from "@/lib/face/descriptor";
 import { proximoTipo, limitesDoDia, type TipoDB } from "@/lib/ponto";
 
 async function funcionarioAtual() {
   const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await usuarioAtual(supabase);
   if (!user) return null;
   const { data } = await supabase
     .from("funcionarios")
@@ -68,55 +66,75 @@ export interface PunchPayload {
   descriptor: number[];
 }
 
-/** Registra o ponto: valida geofence e rosto no servidor antes de gravar. */
+type CercaRow = {
+  id: string;
+  nome: string;
+  latitude: number;
+  longitude: number;
+  raio_metros: number;
+};
+
+const umOuNulo = <T,>(v: T | T[] | null | undefined): T | null =>
+  Array.isArray(v) ? (v[0] ?? null) : (v ?? null);
+
+/**
+ * Registra o ponto: valida geofence e rosto no servidor antes de gravar.
+ *
+ * Desempenho: antes eram 6 idas sequenciais ao Supabase (getUser + 5 queries)
+ * mais o router.refresh() do cliente, que refazia tudo de novo. Agora:
+ *   - usuário via JWT local (0 requisições),
+ *   - funcionário + cercas + biometria + marcações do dia numa ÚNICA query,
+ *   - 1 insert.
+ */
 export async function baterPonto(p: PunchPayload): Promise<PunchResult> {
+  if (
+    !isFinite(p.lat) ||
+    !isFinite(p.lng) ||
+    !Array.isArray(p.descriptor) ||
+    p.descriptor.length !== 128
+  ) {
+    return { error: "Dados de captura inválidos. Tente novamente." };
+  }
+
   const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await usuarioAtual(supabase);
   if (!user) return { error: "Sessão expirada. Entre novamente." };
 
-  const { data: func } = await supabase
+  const { inicio, fim } = limitesDoDia(new Date());
+  const { data: func, error: errCtx } = await supabase
     .from("funcionarios")
-    .select("id, empresa_id")
+    .select(
+      `id, empresa_id,
+       biometria_facial(template),
+       empresa:empresas!empresa_id(cercas(id, nome, latitude, longitude, raio_metros)),
+       hoje:registros_ponto!funcionario_id(tipo, marcado_em)`,
+    )
     .eq("user_id", user.id)
-    .single();
+    .eq("empresa.cercas.ativo", true)
+    .gte("hoje.marcado_em", inicio)
+    .lte("hoje.marcado_em", fim)
+    .order("marcado_em", { referencedTable: "hoje" })
+    .maybeSingle();
+  if (errCtx) return { error: `Falha ao consultar: ${errCtx.message}` };
   if (!func) return { error: "Funcionário não encontrado." };
 
-  // 1) Geofence — valida no servidor
-  const { data: cercas } = await supabase
-    .from("cercas")
-    .select("id, nome, latitude, longitude, raio_metros")
-    .eq("empresa_id", func.empresa_id)
-    .eq("ativo", true);
-  if (!cercas || cercas.length === 0) {
+  // 1) Geofence — valida no servidor (com tolerância limitada da precisão do GPS)
+  const empresa = umOuNulo(func.empresa as unknown as { cercas: CercaRow[] } | null);
+  const cercas = (empresa?.cercas ?? []) as CercaRow[];
+  if (cercas.length === 0) {
     return { error: "Nenhuma área de fábrica configurada." };
   }
-  let melhorCerca: (typeof cercas)[number] | null = null;
-  let melhorDist = Number.POSITIVE_INFINITY;
-  let dentro = false;
-  for (const c of cercas) {
-    const r = avaliarCerca({ lat: p.lat, lng: p.lng }, c);
-    if (r.distancia < melhorDist) {
-      melhorDist = r.distancia;
-      melhorCerca = c;
-      dentro = r.dentro;
-    }
-  }
-  if (!dentro || !melhorCerca) {
+  const geo = melhorCerca({ lat: p.lat, lng: p.lng }, cercas, p.precisao);
+  if (!geo || !geo.dentro) {
+    const prec = p.precisao ? ` · GPS ±${Math.round(p.precisao)} m` : "";
     return {
-      error: `Fora da área permitida (${Math.round(melhorDist)} m da fábrica).`,
+      error: `Fora da área permitida (${Math.round(geo?.distancia ?? 0)} m do centro da fábrica, raio ${geo?.cerca.raio_metros ?? "?"} m${prec}).`,
     };
   }
 
   // 2) Rosto — compara com o template cadastrado (servidor)
-  const { data: bio } = await supabase
-    .from("biometria_facial")
-    .select("template")
-    .eq("funcionario_id", func.id)
-    .single();
+  const bio = umOuNulo(func.biometria_facial as unknown as { template: string } | null);
   if (!bio) return { error: "Cadastre seu rosto antes de bater o ponto." };
-
   let template: number[];
   try {
     template = JSON.parse(bio.template);
@@ -129,15 +147,7 @@ export async function baterPonto(p: PunchPayload): Promise<PunchResult> {
   }
 
   // 3) Próximo tipo de marcação (a partir do dia)
-  const { inicio, fim } = limitesDoDia(new Date());
-  const { data: hoje } = await supabase
-    .from("registros_ponto")
-    .select("tipo, marcado_em")
-    .eq("funcionario_id", func.id)
-    .gte("marcado_em", inicio)
-    .lte("marcado_em", fim)
-    .order("marcado_em");
-  const tipos = (hoje ?? []).map((r) => r.tipo as TipoDB);
+  const tipos = ((func.hoje ?? []) as { tipo: TipoDB }[]).map((r) => r.tipo);
   const tipo = proximoTipo(tipos);
 
   // 4) Grava (hash/NSR são selados pelo trigger)
@@ -150,7 +160,7 @@ export async function baterPonto(p: PunchPayload): Promise<PunchResult> {
       latitude: p.lat,
       longitude: p.lng,
       precisao_m: p.precisao ?? null,
-      cerca_id: melhorCerca.id,
+      cerca_id: geo.cerca.id,
       dentro_cerca: true,
       metodo_verificacao: "facial",
       face_score: Number(cmp.score.toFixed(3)),
@@ -164,6 +174,6 @@ export async function baterPonto(p: PunchPayload): Promise<PunchResult> {
     ok: true as const,
     tipo: inserido.tipo as TipoDB,
     marcado_em: inserido.marcado_em as string,
-    cerca: melhorCerca.nome as string,
+    cerca: geo.cerca.nome,
   };
 }

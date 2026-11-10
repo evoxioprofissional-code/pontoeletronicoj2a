@@ -27,13 +27,52 @@ export interface Cerca {
 
 export interface ResultadoCerca {
   dentro: boolean;
-  distancia: number; // metros
+  distancia: number; // metros até o centro da cerca
 }
 
-export function avaliarCerca(pos: Ponto, cerca: Cerca): ResultadoCerca {
+/**
+ * Tolerância máxima concedida pela imprecisão do GPS. Dentro de galpões o
+ * sinal piora (±20–50 m é comum); concedemos até este valor de margem, mas não
+ * mais, para que uma leitura muito imprecisa não "libere" quem está longe.
+ */
+export const TOLERANCIA_GPS_MAX_M = 50;
+
+/**
+ * Avalia se a posição está dentro da cerca, considerando a precisão informada
+ * pelo GPS: a pessoa é aceita se o círculo de incerteza tocar a cerca.
+ */
+export function avaliarCerca(
+  pos: Ponto,
+  cerca: Cerca,
+  precisao?: number | null,
+): ResultadoCerca {
   const distancia = distanciaMetros(pos, {
     lat: cerca.latitude,
     lng: cerca.longitude,
   });
-  return { dentro: distancia <= cerca.raio_metros, distancia };
+  const margem =
+    typeof precisao === "number" && isFinite(precisao) && precisao > 0
+      ? Math.min(precisao, TOLERANCIA_GPS_MAX_M)
+      : 0;
+  return { dentro: distancia - margem <= cerca.raio_metros, distancia };
+}
+
+/** Avalia todas as cercas e devolve a mais próxima (ou a primeira em que está dentro). */
+export function melhorCerca<C extends Cerca>(
+  pos: Ponto,
+  cercas: C[],
+  precisao?: number | null,
+): { cerca: C; dentro: boolean; distancia: number } | null {
+  let melhor: { cerca: C; dentro: boolean; distancia: number } | null = null;
+  for (const c of cercas) {
+    const r = avaliarCerca(pos, c, precisao);
+    if (
+      !melhor ||
+      (r.dentro && !melhor.dentro) ||
+      (r.dentro === melhor.dentro && r.distancia < melhor.distancia)
+    ) {
+      melhor = { cerca: c, ...r };
+    }
+  }
+  return melhor;
 }

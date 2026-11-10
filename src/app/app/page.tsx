@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, usuarioAtual } from "@/lib/supabase/server";
 import { LiveClock, DataExtenso } from "@/components/LiveClock";
-import { PontoCliente } from "@/components/PontoCliente";
+import { PontoCliente, type CercaCliente } from "@/components/PontoCliente";
 import { BottomNav } from "@/components/BottomNav";
 import { StatusBadge } from "@/components/ui";
 import {
@@ -24,6 +24,7 @@ import {
 } from "@/lib/ponto";
 
 const HORA_FMT = new Intl.DateTimeFormat("pt-BR", {
+  timeZone: "America/Sao_Paulo",
   hour: "2-digit",
   minute: "2-digit",
 });
@@ -55,16 +56,25 @@ function Atalho({
 
 export default async function AppHome() {
   const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await usuarioAtual(supabase);
   if (!user) redirect("/login");
 
+  // Uma única query: funcionário + cercas ativas + biometria + marcações do dia.
+  const { inicio, fim } = limitesDoDia(new Date());
   const { data: func } = await supabase
     .from("funcionarios")
-    .select("id, matricula, nome, cargo, papel, carga_horaria_min, empresa_id")
+    .select(
+      `id, matricula, nome, cargo, papel, carga_horaria_min, empresa_id,
+       biometria_facial(funcionario_id),
+       empresa:empresas!empresa_id(cercas(nome, latitude, longitude, raio_metros)),
+       hoje:registros_ponto!funcionario_id(tipo, marcado_em)`,
+    )
     .eq("user_id", user.id)
-    .single();
+    .eq("empresa.cercas.ativo", true)
+    .gte("hoje.marcado_em", inicio)
+    .lte("hoje.marcado_em", fim)
+    .order("marcado_em", { referencedTable: "hoje" })
+    .maybeSingle();
 
   if (!func) {
     return (
@@ -78,36 +88,20 @@ export default async function AppHome() {
 
   const gestor = func.papel === "rh" || func.papel === "admin";
 
-  const { data: cerca } = await supabase
-    .from("cercas")
-    .select("nome, latitude, longitude, raio_metros")
-    .eq("empresa_id", func.empresa_id)
-    .eq("ativo", true)
-    .limit(1)
-    .maybeSingle();
+  const empresa = (
+    Array.isArray(func.empresa) ? func.empresa[0] : func.empresa
+  ) as { cercas: CercaCliente[] } | null;
+  const cercas = empresa?.cercas ?? [];
 
-  const { inicio, fim } = limitesDoDia(new Date());
-  const { data: hoje } = await supabase
-    .from("registros_ponto")
-    .select("tipo, marcado_em")
-    .eq("funcionario_id", func.id)
-    .gte("marcado_em", inicio)
-    .lte("marcado_em", fim)
-    .order("marcado_em");
-
-  const marcacoes = (hoje ?? []) as { tipo: TipoDB; marcado_em: string }[];
+  const marcacoes = (func.hoje ?? []) as { tipo: TipoDB; marcado_em: string }[];
   const tipos = marcacoes.map((m) => m.tipo);
   const status = statusDe(tipos);
   const prox = proximoTipo(tipos);
   const trabalhado = minutosTrabalhados(marcacoes);
   const carga = func.carga_horaria_min ?? 480;
 
-  const { data: bio } = await supabase
-    .from("biometria_facial")
-    .select("funcionario_id")
-    .eq("funcionario_id", func.id)
-    .maybeSingle();
-  const temFace = Boolean(bio);
+  const bio = func.biometria_facial;
+  const temFace = Array.isArray(bio) ? bio.length > 0 : Boolean(bio);
 
   const primeiroNome = func.nome.split(" ")[0];
 
@@ -151,7 +145,7 @@ export default async function AppHome() {
           <LiveClock mostrarData={false} />
           <div className="mt-5">
             <PontoCliente
-              cerca={cerca ?? null}
+              cercas={cercas}
               temFace={temFace}
               proximoTipo={prox}
             />

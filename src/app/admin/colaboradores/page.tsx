@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, usuarioAtual } from "@/lib/supabase/server";
 import { NovoColaborador } from "@/components/dash/NovoColaborador";
 import { ArrowRight, UserIcon } from "@/components/icons";
 import {
@@ -11,9 +11,7 @@ import {
 
 export default async function Colaboradores() {
   const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await usuarioAtual(supabase);
   const { data: eu } = await supabase
     .from("funcionarios")
     .select("empresa_id")

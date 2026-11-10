@@ -88,11 +88,49 @@ export function formatarMinutos(min: number): string {
   return `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, "0")}min`;
 }
 
-/** Início e fim (ISO) de um dia local, para consultas por dia. */
+/**
+ * Fuso da operação. O servidor (Vercel/Node) roda em UTC; sem isto, o "dia"
+ * virava às 21h no horário de Brasília e marcações noturnas caíam no dia
+ * seguinte. O Brasil não tem horário de verão desde 2019 (UTC-3 fixo).
+ */
+export const FUSO = "America/Sao_Paulo";
+const OFFSET = "-03:00";
+
+/** "AAAA-MM-DD" da data no fuso da operação. */
+export function dataLocal(base: Date): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: FUSO,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(base);
+}
+
+/** Início e fim (ISO) de um dia no fuso da operação, para consultas por dia. */
 export function limitesDoDia(base: Date): { inicio: string; fim: string } {
-  const ini = new Date(base);
-  ini.setHours(0, 0, 0, 0);
-  const fim = new Date(base);
-  fim.setHours(23, 59, 59, 999);
-  return { inicio: ini.toISOString(), fim: fim.toISOString() };
+  const d = dataLocal(base);
+  return {
+    inicio: new Date(`${d}T00:00:00.000${OFFSET}`).toISOString(),
+    fim: new Date(`${d}T23:59:59.999${OFFSET}`).toISOString(),
+  };
+}
+
+/** Início e fim (ISO) do mês corrente no fuso da operação. */
+export function limitesDoMes(base: Date): { inicio: string; fim: string } {
+  const [y, m] = dataLocal(base).split("-").map(Number);
+  const ultimoDia = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const mm = String(m).padStart(2, "0");
+  return {
+    inicio: new Date(`${y}-${mm}-01T00:00:00.000${OFFSET}`).toISOString(),
+    fim: new Date(`${y}-${mm}-${ultimoDia}T23:59:59.999${OFFSET}`).toISOString(),
+  };
+}
+
+/** "HH:MM" no fuso da operação. */
+export function horaLocal(iso: string | Date): string {
+  return new Intl.DateTimeFormat("pt-BR", {
+    timeZone: FUSO,
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(iso));
 }

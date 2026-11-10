@@ -38,6 +38,7 @@ export function CercaForm({ init }: { init: CercaInit | null }) {
   const [raio, setRaio] = useState(String(init?.raio_metros ?? 150));
 
   const [geoMsg, setGeoMsg] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
   const [buscando, setBuscando] = useState(false);
   const [localizando, setLocalizando] = useState(false);
 
@@ -52,6 +53,9 @@ export function CercaForm({ init }: { init: CercaInit | null }) {
       (pos) => {
         setLat(pos.coords.latitude.toFixed(6));
         setLng(pos.coords.longitude.toFixed(6));
+        setAviso(
+          `Localização capturada (precisão ±${Math.round(pos.coords.accuracy)} m). Confira no mapa e salve.`,
+        );
         setLocalizando(false);
       },
       () => {
@@ -74,6 +78,9 @@ export function CercaForm({ init }: { init: CercaInit | null }) {
     setLat(r.lat.toFixed(6));
     setLng(r.lng.toFixed(6));
     setEndereco(r.display);
+    setAviso(
+      "Atenção: a busca por endereço é APROXIMADA (pode errar centenas de metros). Confira em \"Ver no mapa\" ou, estando na fábrica, use \"Usar minha localização atual\".",
+    );
   }
 
   return (
@@ -174,6 +181,8 @@ export function CercaForm({ init }: { init: CercaInit | null }) {
           Ver no mapa
         </a>
       )}
+
+      {aviso && <p className="text-sm text-amber">{aviso}</p>}
 
       {geoMsg && (
         <p className="flex items-center gap-2 text-sm text-danger">

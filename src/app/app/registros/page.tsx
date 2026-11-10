@@ -1,30 +1,32 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, usuarioAtual } from "@/lib/supabase/server";
 import { BottomNav } from "@/components/BottomNav";
 import { ArrowLeft, PunchIcon } from "@/components/icons";
 import {
   minutosTrabalhados,
   formatarMinutos,
   rotuloTipo,
+  limitesDoMes,
+  dataLocal,
   type TipoDB,
 } from "@/lib/ponto";
 
 const DIA_FMT = new Intl.DateTimeFormat("pt-BR", {
+  timeZone: "America/Sao_Paulo",
   weekday: "long",
   day: "2-digit",
   month: "long",
 });
 const HORA_FMT = new Intl.DateTimeFormat("pt-BR", {
+  timeZone: "America/Sao_Paulo",
   hour: "2-digit",
   minute: "2-digit",
 });
 
 export default async function Registros() {
   const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await usuarioAtual(supabase);
   if (!user) redirect("/login");
 
   const { data: func } = await supabase
@@ -34,13 +36,12 @@ export default async function Registros() {
     .single();
   if (!func) redirect("/app");
 
-  const now = new Date();
-  const inicio = new Date(now.getFullYear(), now.getMonth(), 1);
+  const { inicio } = limitesDoMes(new Date());
   const { data: regs } = await supabase
     .from("registros_ponto")
     .select("tipo, marcado_em")
     .eq("funcionario_id", func.id)
-    .gte("marcado_em", inicio.toISOString())
+    .gte("marcado_em", inicio)
     .order("marcado_em", { ascending: false });
 
   const marcacoes = (regs ?? []) as { tipo: TipoDB; marcado_em: string }[];
@@ -48,8 +49,7 @@ export default async function Registros() {
   // Agrupa por dia
   const dias = new Map<string, { tipo: TipoDB; marcado_em: string }[]>();
   for (const m of marcacoes) {
-    const d = new Date(m.marcado_em);
-    const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    const key = dataLocal(new Date(m.marcado_em));
     const arr = dias.get(key) ?? [];
     arr.push(m);
     dias.set(key, arr);

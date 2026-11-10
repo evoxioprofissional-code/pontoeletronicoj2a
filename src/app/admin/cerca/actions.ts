@@ -1,13 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, usuarioAtual } from "@/lib/supabase/server";
 
 async function gestorEmpresa() {
   const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await usuarioAtual(supabase);
   if (!user) return null;
   const { data } = await supabase
     .from("funcionarios")

@@ -28,3 +28,18 @@ export function createClient() {
     },
   );
 }
+
+/**
+ * Usuário logado SEM ida ao servidor de Auth: valida o JWT localmente
+ * (o projeto usa chaves assimétricas ES256, então getClaims() verifica a
+ * assinatura com a JWKS em cache). getUser() fazia uma requisição HTTP extra
+ * em cada página/ação — era um dos maiores custos de latência.
+ */
+export async function usuarioAtual(
+  supabase: ReturnType<typeof createClient>,
+): Promise<{ id: string } | null> {
+  const { data, error } = await supabase.auth.getClaims();
+  const sub = data?.claims?.sub;
+  if (error || !sub) return null;
+  return { id: sub };
+}

@@ -1,16 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, usuarioAtual } from "@/lib/supabase/server";
 import type { TipoDB } from "@/lib/ponto";
 
 type DB = ReturnType<typeof createClient>;
 
 /** Garante que o usuário logado é gestor (rh/admin). Retorna id + empresa. */
 async function gestor(supabase: DB) {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await usuarioAtual(supabase);
   if (!user) return null;
   const { data } = await supabase
     .from("funcionarios")

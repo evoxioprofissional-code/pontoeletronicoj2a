@@ -1,12 +1,10 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, usuarioAtual } from "@/lib/supabase/server";
 import { CercaForm } from "@/components/dash/CercaForm";
 import { PinIcon } from "@/components/icons";
 
 export default async function CercaAdmin() {
   const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await usuarioAtual(supabase);
   const { data: eu } = await supabase
     .from("funcionarios")
     .select("empresa_id")

@@ -4,6 +4,7 @@ import {
   rotuloTipo,
   type TipoDB,
   type MarcacaoLite,
+  dataLocal,
 } from "./ponto";
 
 export interface FuncLite {
@@ -25,8 +26,7 @@ export interface Serie {
 }
 
 function diaLocal(iso: string): string {
-  const d = new Date(iso);
-  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  return dataLocal(new Date(iso));
 }
 
 function primeiroNomeUltimo(nome: string): string {

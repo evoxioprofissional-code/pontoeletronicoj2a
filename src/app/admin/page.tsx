@@ -1,13 +1,10 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, usuarioAtual } from "@/lib/supabase/server";
 import { BarCard, PieCard } from "@/components/dash/Charts";
 import { computarMetricas, type FuncLite, type RegLite } from "@/lib/metrics";
-import { formatarMinutos } from "@/lib/ponto";
+import { formatarMinutos, limitesDoMes, FUSO } from "@/lib/ponto";
 
-const D = (d: Date) =>
-  `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(
-    2,
-    "0",
-  )}/${d.getFullYear()}`;
+const D = (iso: string) =>
+  new Intl.DateTimeFormat("pt-BR", { timeZone: FUSO }).format(new Date(iso));
 
 function Stat({ label, valor }: { label: string; valor: string }) {
   return (
@@ -24,9 +21,7 @@ function Stat({ label, valor }: { label: string; valor: string }) {
 
 export default async function DashboardAdmin() {
   const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await usuarioAtual(supabase);
   const { data: eu } = await supabase
     .from("funcionarios")
     .select("empresa_id, empresas(razao_social, nome_fantasia)")
@@ -35,9 +30,7 @@ export default async function DashboardAdmin() {
   const empresaId = eu!.empresa_id;
   const empresa = Array.isArray(eu!.empresas) ? eu!.empresas[0] : eu!.empresas;
 
-  const now = new Date();
-  const inicio = new Date(now.getFullYear(), now.getMonth(), 1);
-  const fim = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+  const { inicio, fim } = limitesDoMes(new Date());
 
   const [{ data: funcs }, { data: regs }, { data: ajus }] = await Promise.all([
     supabase
@@ -48,8 +41,8 @@ export default async function DashboardAdmin() {
       .from("registros_ponto")
       .select("funcionario_id, tipo, marcado_em")
       .eq("empresa_id", empresaId)
-      .gte("marcado_em", inicio.toISOString())
-      .lte("marcado_em", fim.toISOString()),
+      .gte("marcado_em", inicio)
+      .lte("marcado_em", fim),
     supabase.from("ajustes_ponto").select("status").eq("empresa_id", empresaId),
   ]);
 

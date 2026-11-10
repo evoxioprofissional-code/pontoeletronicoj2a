@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, usuarioAtual } from "@/lib/supabase/server";
 import { BottomNav } from "@/components/BottomNav";
 import { ArrowLeft, LogoutIcon, ShieldIcon, PinIcon } from "@/components/icons";
 import { sair } from "../actions";
@@ -18,9 +18,7 @@ function Linha({ label, valor }: { label: string; valor: string }) {
 
 export default async function Perfil() {
   const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await usuarioAtual(supabase);
   if (!user) redirect("/login");
 
   const { data: func } = await supabase

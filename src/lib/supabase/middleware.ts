@@ -27,10 +27,11 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  // IMPORTANTE: não colocar lógica entre createServerClient e getUser().
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // IMPORTANTE: não colocar lógica entre createServerClient e getClaims().
+  // getClaims() valida o JWT localmente (ES256) e só vai à rede quando
+  // precisa renovar a sessão — getUser() fazia uma requisição em TODA página.
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims?.sub ? { id: data.claims.sub } : null;
 
   const path = request.nextUrl.pathname;
   const protegida = path.startsWith("/app");

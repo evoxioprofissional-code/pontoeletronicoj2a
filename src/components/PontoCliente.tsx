@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { CameraCapture } from "./CameraCapture";
 import { PinIcon, ScanFaceIcon, CheckIcon, AlertIcon } from "./icons";
-import { avaliarCerca } from "@/lib/geo";
+import { melhorCerca, TOLERANCIA_GPS_MAX_M } from "@/lib/geo";
 import { rotuloTipo, type TipoDB } from "@/lib/ponto";
 import { baterPonto, registrarFace } from "@/app/app/ponto-actions";
 
-interface Cerca {
+export interface CercaCliente {
   nome: string;
   latitude: number;
   longitude: number;
@@ -16,7 +15,7 @@ interface Cerca {
 }
 
 interface Props {
-  cerca: Cerca | null;
+  cercas: CercaCliente[];
   temFace: boolean;
   proximoTipo: TipoDB;
 }
@@ -29,10 +28,10 @@ interface GeoState {
   precisao?: number;
   dentro?: boolean;
   distancia?: number;
+  raio?: number;
 }
 
-export function PontoCliente({ cerca, temFace, proximoTipo }: Props) {
-  const router = useRouter();
+export function PontoCliente({ cercas, temFace, proximoTipo }: Props) {
   const [geo, setGeo] = useState<GeoState>({ fase: "carregando" });
   const [modal, setModal] = useState<null | "cadastro" | "ponto">(null);
   const [ocupado, setOcupado] = useState(false);
@@ -44,30 +43,33 @@ export function PontoCliente({ cerca, temFace, proximoTipo }: Props) {
   }>(null);
 
   useEffect(() => {
-    if (!cerca || !("geolocation" in navigator)) {
+    if (cercas.length === 0 || !("geolocation" in navigator)) {
       setGeo({ fase: "erro" });
       return;
     }
     const id = navigator.geolocation.watchPosition(
       (pos) => {
         const p = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        const r = avaliarCerca(p, cerca);
+        const r = melhorCerca(p, cercas, pos.coords.accuracy);
         setGeo({
           fase: "ok",
           lat: p.lat,
           lng: p.lng,
           precisao: pos.coords.accuracy,
-          dentro: r.dentro,
-          distancia: r.distancia,
+          dentro: r?.dentro ?? false,
+          distancia: r?.distancia,
+          raio: r?.cerca.raio_metros,
         });
       },
       (err) => {
         setGeo({ fase: err.code === err.PERMISSION_DENIED ? "negado" : "erro" });
       },
-      { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 },
     );
     return () => navigator.geolocation.clearWatch(id);
-  }, [cerca]);
+    // cercas vem do servidor; a chave evita reiniciar o GPS a cada render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(cercas)]);
 
   const podeBater = temFace && geo.fase === "ok" && geo.dentro === true;
 
@@ -97,7 +99,6 @@ export function PontoCliente({ cerca, temFace, proximoTipo }: Props) {
       return;
     }
     setModal(null);
-    router.refresh();
   }
 
   async function aoBater(descriptor: number[]) {
@@ -120,15 +121,17 @@ export function PontoCliente({ cerca, temFace, proximoTipo }: Props) {
       return;
     }
     if ("ok" in r) {
+      // Sem router.refresh(): o revalidatePath("/app") da server action já
+      // devolve a página atualizada na mesma resposta. O refresh refazia
+      // todas as queries uma segunda vez.
       setResultado({ tipo: r.tipo, marcado_em: r.marcado_em, cerca: r.cerca });
-      router.refresh();
     }
   }
 
   return (
     <div className="flex flex-col gap-4">
       {/* Geofence ao vivo */}
-      <GeofenceLive cerca={cerca} geo={geo} />
+      <GeofenceLive temCerca={cercas.length > 0} geo={geo} />
 
       {/* Cadastro facial pendente */}
       {!temFace && (
@@ -216,10 +219,17 @@ export function PontoCliente({ cerca, temFace, proximoTipo }: Props) {
   );
 }
 
-function GeofenceLive({ cerca, geo }: { cerca: Cerca | null; geo: GeoState }) {
+function GeofenceLive({ temCerca, geo }: { temCerca: boolean; geo: GeoState }) {
   let dentro = false;
   let texto: string;
-  if (!cerca) {
+  let detalhe: string | null = null;
+  if (geo.fase === "ok" && geo.precisao != null) {
+    detalhe = `GPS ±${Math.round(geo.precisao)} m · raio da área ${geo.raio ?? "?"} m`;
+    if (!geo.dentro && geo.precisao > TOLERANCIA_GPS_MAX_M) {
+      detalhe += " — sinal fraco, vá para perto de uma janela/porta";
+    }
+  }
+  if (!temCerca) {
     texto = "Área da fábrica não configurada";
   } else if (geo.fase === "carregando") {
     texto = "Localizando você…";
@@ -246,7 +256,12 @@ function GeofenceLive({ cerca, geo }: { cerca: Cerca | null; geo: GeoState }) {
       role="status"
     >
       <PinIcon className="h-5 w-5 shrink-0" />
-      <span>{texto}</span>
+      <span className="flex flex-col">
+        <span>{texto}</span>
+        {detalhe && (
+          <span className="text-xs font-normal opacity-75">{detalhe}</span>
+        )}
+      </span>
     </div>
   );
 }

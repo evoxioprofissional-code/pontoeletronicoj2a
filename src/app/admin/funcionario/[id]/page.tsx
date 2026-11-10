@@ -1,11 +1,13 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, usuarioAtual } from "@/lib/supabase/server";
 import { ArrowLeft } from "@/components/icons";
 import {
   minutosTrabalhados,
   formatarMinutos,
   limitesDoDia,
+  dataLocal,
+  horaLocal,
   rotuloTipo,
   CICLO,
   type TipoDB,
@@ -17,20 +19,14 @@ import {
   excluirMarcacao,
 } from "../../actions";
 
-function ymdLocal(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
+const ymdLocal = dataLocal;
 function hmLocal(iso: string): string {
   const d = new Date(iso);
-  return `${String(d.getHours()).padStart(2, "0")}:${String(
-    d.getMinutes(),
-  ).padStart(2, "0")}`;
+  return horaLocal(d);
 }
 
 const DATA_FMT = new Intl.DateTimeFormat("pt-BR", {
+  timeZone: "America/Sao_Paulo",
   weekday: "long",
   day: "2-digit",
   month: "long",
@@ -44,9 +40,7 @@ export default async function AdminFuncionario({
   searchParams: { d?: string };
 }) {
   const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await usuarioAtual(supabase);
   if (!user) redirect("/login");
 
   const { data: eu } = await supabase
