@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useFormState, useFormStatus } from "react-dom";
 import { entrar, type LoginState } from "./actions";
 import { Marca } from "@/components/Logo";
 import { Aviso, Campo, botao } from "@/components/ui";
-import { EyeIcon, EyeOffIcon } from "@/components/icons";
+import { EyeIcon, EyeOffIcon, PhoneIcon } from "@/components/icons";
 
 const initial: LoginState = {};
 
@@ -27,7 +28,7 @@ export default function LoginPage() {
   const [verSenha, setVerSenha] = useState(false);
 
   return (
-    <div className="grid min-h-screen lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
+    <div className="grid min-h-dvh lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
       {/* Painel da marca — só em telas largas */}
       <aside className="hidden flex-col justify-between bg-brand px-12 py-10 lg:flex">
         <Marca invertido />
@@ -54,7 +55,7 @@ export default function LoginPage() {
       </aside>
 
       {/* Formulário */}
-      <main className="flex flex-col justify-center bg-paper px-5 py-10 sm:px-8">
+      <main className="app-gutter flex flex-col justify-center bg-paper pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] sm:px-8">
         <div className="mx-auto w-full max-w-sm">
           <Marca className="mb-10 lg:hidden" />
 
@@ -110,7 +111,15 @@ export default function LoginPage() {
             <Entrar />
           </form>
 
-          <p className="mt-8 text-sm leading-relaxed text-ink-3">
+          <Link
+            href="/instalar"
+            className={botao("secundario", "md", "mt-4 w-full text-brand")}
+          >
+            <PhoneIcon className="h-5 w-5" />
+            Instalar no celular
+          </Link>
+
+          <p className="mt-6 text-sm leading-relaxed text-ink-3">
             Esqueceu a senha ou é seu primeiro acesso? Procure o RH da sua
             empresa.
           </p>

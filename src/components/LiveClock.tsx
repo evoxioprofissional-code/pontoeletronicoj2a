@@ -24,7 +24,7 @@ export function LiveClock() {
       className="num flex items-baseline justify-center font-medium leading-none text-ink"
       aria-label="Horário atual"
     >
-      <span className="text-[3.75rem] sm:text-[4.5rem]">
+      <span className="text-[clamp(2.75rem,13vw,3.75rem)] sm:text-[4.5rem]">
         {now ? `${p2(now.getHours())}:${p2(now.getMinutes())}` : "--:--"}
       </span>
       <span className="ml-1 w-[2.4ch] text-left text-2xl text-ink-3 sm:text-3xl">

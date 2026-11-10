@@ -5,7 +5,7 @@ import { sair } from "@/app/app/actions";
 /** Conta logada que ainda não foi ligada a um funcionário pelo RH. */
 export function SemVinculo() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-paper px-6 text-center">
+    <main className="app-gutter flex min-h-dvh flex-col items-center justify-center bg-paper pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(1.5rem,env(safe-area-inset-top))] text-center">
       <Marca className="mb-8" />
       <h1 className="text-xl font-semibold text-ink">
         Sua conta ainda não está liberada

@@ -29,6 +29,33 @@ export function ArrowRight(props: IconProps) {
   );
 }
 
+export function PhoneIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <rect x="6" y="2.5" width="12" height="19" rx="2.5" />
+      <path d="M10 18.5h4" />
+    </svg>
+  );
+}
+
+export function MoreVerticalIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props} stroke="none" fill="currentColor">
+      <circle cx="12" cy="5" r="1.75" />
+      <circle cx="12" cy="12" r="1.75" />
+      <circle cx="12" cy="19" r="1.75" />
+    </svg>
+  );
+}
+
+export function ShareIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M12 15V2m-4 4 4-4 4 4M8 9H5v13h14V9h-3" />
+    </svg>
+  );
+}
+
 export function EnterIcon(props: IconProps) {
   return (
     <svg {...base} {...props}>

@@ -33,13 +33,13 @@ export function AppShell({
   const pathname = usePathname();
   const atual = abaAtiva ?? pathname;
   const ativa = (href: string) =>
-    href === "/app" ? atual === "/app" : atual.startsWith(href);
+    atual === href || (href === "/app/registros" && atual === "/app/espelho");
 
   return (
-    <div className="min-h-screen bg-paper print:bg-white">
+    <div className="min-h-dvh bg-paper print:bg-white">
       <header className="safe-t sticky top-0 z-30 bg-surface shadow-bar print:hidden">
-        <div className="mx-auto flex h-14 max-w-5xl items-center gap-6 px-4 sm:px-6">
-          <Link href="/app" aria-label="j2aponto — início" className="shrink-0">
+        <div className="app-gutter mx-auto flex h-14 max-w-5xl items-center gap-2 md:gap-6">
+          <Link href="/app" aria-label="j2aponto — início" className="flex min-h-11 shrink-0 items-center rounded-lg">
             <Marca />
           </Link>
 
@@ -67,7 +67,7 @@ export function AppShell({
             {gestor && (
               <Link
                 href="/admin"
-                className="rounded-md border border-line-strong px-3 py-1.5 text-sm font-medium text-ink transition-colors hover:border-ink-3"
+                className="hidden rounded-md border border-line-strong px-3 py-1.5 text-sm font-medium text-ink transition-colors hover:border-ink-3 md:inline-flex"
               >
                 Painel do RH
               </Link>
@@ -75,7 +75,7 @@ export function AppShell({
             <Link
               href="/app/perfil"
               aria-label={`Perfil de ${nome}`}
-              className="rounded-lg"
+              className="hidden rounded-lg md:block"
             >
               <Avatar nome={nome} tamanho="sm" />
             </Link>
@@ -83,13 +83,13 @@ export function AppShell({
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 pb-28 pt-5 sm:px-6 md:pb-12 md:pt-8 print:max-w-none print:p-0">
+      <main className="app-gutter mx-auto max-w-5xl pb-[calc(4.75rem+env(safe-area-inset-bottom))] pt-5 md:pb-12 md:pt-8 print:max-w-none print:p-0">
         {children}
       </main>
 
       <nav
         aria-label="Principal"
-        className="safe-b fixed inset-x-0 bottom-0 z-30 bg-surface shadow-sheet md:hidden print:hidden"
+        className="app-gutter fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden print:hidden"
       >
         <ul className="mx-auto flex max-w-md">
           {ABAS.map(({ href, rotulo, Icone }) => {
@@ -99,14 +99,13 @@ export function AppShell({
                 <Link
                   href={href}
                   aria-current={on ? "page" : undefined}
-                  className={`relative flex flex-col items-center gap-0.5 pb-1 pt-2.5 text-xs font-medium ${
+                  className={`flex h-14 touch-manipulation flex-col items-center justify-center gap-0.5 rounded-lg text-xs font-semibold transition-colors active:bg-paper ${
                     on ? "text-brand" : "text-ink-3"
                   }`}
                 >
-                  {on && (
-                    <span className="absolute inset-x-6 top-0 h-0.5 rounded-full bg-brand" />
-                  )}
-                  <Icone className="h-6 w-6" />
+                  <span className={`flex h-7 w-14 items-center justify-center rounded-full ${on ? "bg-brand-tint" : ""}`}>
+                    <Icone className="h-5 w-5" />
+                  </span>
                   {rotulo}
                 </Link>
               </li>

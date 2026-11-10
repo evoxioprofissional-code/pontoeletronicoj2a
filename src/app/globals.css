@@ -67,6 +67,20 @@ body {
   padding-top: env(safe-area-inset-top);
 }
 
+@layer components {
+  .app-gutter {
+    --app-gutter: 1rem;
+    padding-left: max(var(--app-gutter), env(safe-area-inset-left));
+    padding-right: max(var(--app-gutter), env(safe-area-inset-right));
+  }
+
+  @media (min-width: 640px) {
+    .app-gutter {
+      --app-gutter: 1.5rem;
+    }
+  }
+}
+
 /* Impressão (espelho de ponto): folha branca, margens de papel */
 @page {
   margin: 14mm;

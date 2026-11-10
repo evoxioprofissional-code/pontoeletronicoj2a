@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Avatar, Cartao, Etiqueta, TituloSecao, botao } from "@/components/ui";
-import { ArrowRight, LogoutIcon, PinIcon } from "@/components/icons";
+import { ArrowRight, LogoutIcon, PhoneIcon, PinIcon } from "@/components/icons";
 import { sair } from "@/app/app/actions";
 
 export interface PerfilViewProps {
@@ -23,9 +23,9 @@ const PAPEL: Record<string, string> = {
 
 function Linha({ rotulo, children }: { rotulo: string; children: ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-4 px-5 py-3.5">
+    <div className="flex items-start justify-between gap-4 px-5 py-3.5">
       <dt className="text-sm text-ink-3">{rotulo}</dt>
-      <dd className="min-w-0 truncate text-right text-[0.9375rem] font-medium text-ink">
+      <dd className="min-w-0 break-words text-right text-[0.9375rem] font-medium text-ink">
         {children}
       </dd>
     </div>
@@ -48,10 +48,10 @@ export function PerfilView({
       <header className="mb-5 flex items-center gap-4 md:mb-7">
         <Avatar nome={nome} tamanho="lg" />
         <div className="min-w-0">
-          <h1 className="truncate text-2xl font-semibold tracking-tight text-ink">
+          <h1 className="break-words text-2xl font-semibold tracking-tight text-ink">
             {nome}
           </h1>
-          <p className="truncate text-sm text-ink-3">
+          <p className="break-words text-sm text-ink-3">
             {cargo ? `${cargo} · ` : ""}Matrícula{" "}
             <span className="num">{matricula}</span>
           </p>
@@ -114,7 +114,11 @@ export function PerfilView({
         </div>
       </div>
 
-      <div className="mt-6 flex flex-col gap-3 sm:flex-row lg:mt-8">
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap lg:mt-8">
+        <Link href="/instalar" className={botao("secundario")}>
+          <PhoneIcon className="h-5 w-5" />
+          Instalar no celular
+        </Link>
         {gestor && (
           <Link href="/admin" className={botao("secundario", "md", "sm:w-auto")}>
             Abrir painel do RH

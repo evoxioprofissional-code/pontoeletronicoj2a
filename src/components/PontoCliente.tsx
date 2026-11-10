@@ -388,9 +388,9 @@ export function Comprovante({
       role="dialog"
       aria-modal="true"
       aria-labelledby="comprovante-titulo"
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-y-auto bg-paper px-5 py-8"
+      className="app-gutter fixed inset-0 z-50 flex flex-col items-center overflow-y-auto overscroll-contain bg-paper pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))]"
     >
-      <div className="w-full max-w-sm animate-fade-up">
+      <div className="my-auto w-full max-w-sm shrink-0 animate-fade-up">
         <div className="mb-5 flex flex-col items-center text-center">
           <span className="mb-4 flex h-14 w-14 animate-check-in items-center justify-center rounded-full bg-ok text-white">
             <CheckIcon className="h-8 w-8" strokeWidth={2.4} />

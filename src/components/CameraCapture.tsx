@@ -205,10 +205,10 @@ export function CameraCapture({
       role="dialog"
       aria-modal="true"
       aria-label={titulo}
-      className="safe-t fixed inset-0 z-50 flex flex-col bg-paper"
+      className="safe-t fixed inset-0 z-50 flex flex-col overflow-y-auto overscroll-contain bg-paper"
     >
       {/* Topo */}
-      <div className="flex h-14 shrink-0 items-center justify-between border-b border-line bg-surface px-4">
+      <div className="app-gutter flex h-14 shrink-0 items-center justify-between border-b border-line bg-surface">
         <h1 className="text-base font-semibold text-ink">{titulo}</h1>
         <button
           type="button"
@@ -221,7 +221,7 @@ export function CameraCapture({
       </div>
 
       {/* Câmera */}
-      <div className="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col px-4 pt-4">
+      <div className="app-gutter mx-auto flex min-h-48 w-full max-w-md flex-1 flex-col pt-4">
         <div className="relative min-h-0 flex-1 overflow-hidden rounded-xl bg-ink">
           <video
             ref={videoRef}
@@ -270,7 +270,7 @@ export function CameraCapture({
       </div>
 
       {/* Instruções / ação */}
-      <div className="safe-b mx-auto w-full max-w-md shrink-0 px-4 pt-4">
+      <div className="app-gutter safe-b mx-auto w-full max-w-md shrink-0 pt-4">
         <div className="pb-3">
           {fase === "erro" ? (
             <button

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
+import { InstalacaoProvider } from "@/components/InstalacaoProvider";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import "./globals.css";
 
@@ -23,7 +24,7 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
   icons: {
     icon: "/icon.svg",
-    apple: "/icon.svg",
+    apple: { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
   },
   appleWebApp: {
     capable: true,
@@ -47,7 +48,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className={`${sans.variable} ${mono.variable}`}>
       <body className="min-h-screen font-sans antialiased">
-        {children}
+        <InstalacaoProvider>{children}</InstalacaoProvider>
         <ServiceWorkerRegister />
       </body>
     </html>
