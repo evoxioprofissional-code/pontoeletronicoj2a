@@ -3,48 +3,71 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
-html,
-body {
-  height: 100%;
+html {
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background: #0d0f13;
-  color: #edeff2;
+  background: #f6f4f0;
+  color: #141c1f;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* Textura sutil de fundo do palco (fora da moldura) — grade técnica discreta */
-.stage-bg {
-  background-color: #0d0f13;
-  background-image:
-    radial-gradient(circle at 50% 0%, rgba(245, 166, 35, 0.05), transparent 55%),
-    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-  background-size: 100% 100%, 32px 32px, 32px 32px;
-}
-
-/* Foco visível e consistente em todo o protótipo (acessibilidade) */
+/* Foco visível e consistente (teclado / leitor de tela) */
 :focus-visible {
-  outline: 2px solid #f5a623;
+  outline: 2px solid #0e4f5e;
   outline-offset: 2px;
-  border-radius: 4px;
 }
 
-/* Esconde a barra de rolagem dentro da tela do celular, mantendo o scroll */
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+/* Números de relógio e de horas sempre alinhados */
+.num {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
 }
 
-/* Respeita a preferência de menos movimento: mantém o essencial, corta o teatro */
+/* Campos de formulário — um só estilo no app inteiro */
+.campo {
+  display: block;
+  width: 100%;
+  min-height: 2.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid #cbc5ba;
+  background: #ffffff;
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem; /* 16px: o iPhone não dá zoom ao focar */
+  line-height: 1.5rem;
+  color: #141c1f;
+  transition:
+    border-color 0.12s,
+    box-shadow 0.12s;
+}
+.campo::placeholder {
+  color: #8b9498;
+}
+.campo:hover {
+  border-color: #a9a297;
+}
+.campo:focus {
+  outline: none;
+  border-color: #0e4f5e;
+  box-shadow: 0 0 0 3px #e2eef0;
+}
+
+/* Espaço para a barra de gestos / entalhe do celular */
+.safe-b {
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+}
+.safe-t {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* Respeita quem prefere menos movimento */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -53,10 +76,5 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
-  }
-  .stamp-el {
-    animation: none !important;
-    opacity: 1 !important;
-    transform: rotate(-3deg) !important;
   }
 }

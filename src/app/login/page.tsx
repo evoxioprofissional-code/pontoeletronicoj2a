@@ -1,20 +1,21 @@
 "use client";
 
+import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { entrar, type LoginState } from "./actions";
-import { LogoMark, Wordmark } from "@/components/Logo";
-import { AlertIcon } from "@/components/icons";
-import { EMPLOYEE } from "@/lib/mock-data";
+import { Marca } from "@/components/Logo";
+import { Aviso, Campo, botao } from "@/components/ui";
+import { EyeIcon, EyeOffIcon } from "@/components/icons";
 
 const initial: LoginState = {};
 
-function SubmitButton() {
+function Entrar() {
   const { pending } = useFormStatus();
   return (
     <button
       type="submit"
       disabled={pending}
-      className="mt-2 inline-flex w-full items-center justify-center rounded-2xl bg-amber px-5 py-4 text-base font-semibold text-graphite shadow-amber-glow transition hover:bg-amber-soft active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-steel disabled:text-muted disabled:shadow-none"
+      className={botao("primario", "lg", "mt-1 w-full")}
     >
       {pending ? "Entrando…" : "Entrar"}
     </button>
@@ -23,62 +24,98 @@ function SubmitButton() {
 
 export default function LoginPage() {
   const [state, formAction] = useFormState(entrar, initial);
+  const [verSenha, setVerSenha] = useState(false);
 
   return (
-    <main className="stage-bg flex min-h-screen items-center justify-center px-5 py-10">
-      <div className="w-full max-w-sm">
-        <div className="flex flex-col items-center pb-8">
-          <LogoMark size={60} />
-          <Wordmark className="mt-3 !text-2xl" />
-          <p className="mt-1 text-sm text-muted">Registro de ponto</p>
+    <div className="grid min-h-screen lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
+      {/* Painel da marca — só em telas largas */}
+      <aside className="hidden flex-col justify-between bg-brand px-12 py-10 lg:flex">
+        <Marca invertido />
+        <div className="max-w-md">
+          <p className="text-[2.5rem] font-semibold leading-[1.1] tracking-tight text-white">
+            Seu ponto, registrado na hora certa e no lugar certo.
+          </p>
+          <ul className="mt-8 space-y-3 text-[0.9375rem] text-white/80">
+            <li className="flex gap-3">
+              <span className="num text-white/50">01</span>
+              Confirma que é você pelo rosto.
+            </li>
+            <li className="flex gap-3">
+              <span className="num text-white/50">02</span>
+              Confirma que você está na fábrica pelo GPS.
+            </li>
+            <li className="flex gap-3">
+              <span className="num text-white/50">03</span>
+              Guarda cada marcação com data, hora e local.
+            </li>
+          </ul>
         </div>
+        <p className="text-sm text-white/50">Controle de jornada</p>
+      </aside>
 
-        <form action={formAction} className="flex flex-col gap-4">
-          <label className="flex flex-col gap-1.5">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
-              E-mail
-            </span>
-            <input
-              name="email"
-              type="email"
-              inputMode="email"
-              autoComplete="username"
-              required
-              className="w-full rounded-xl border border-steel-line bg-steel px-4 py-3.5 text-lg text-ink placeholder:text-muted focus:border-amber focus:outline-none"
-              placeholder="voce@empresa.com"
-            />
-          </label>
+      {/* Formulário */}
+      <main className="flex flex-col justify-center bg-paper px-5 py-10 sm:px-8">
+        <div className="mx-auto w-full max-w-sm">
+          <Marca className="mb-10 lg:hidden" />
 
-          <label className="flex flex-col gap-1.5">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
-              Senha
-            </span>
-            <input
-              name="senha"
-              type="password"
-              autoComplete="current-password"
-              required
-              className="w-full rounded-xl border border-steel-line bg-steel px-4 py-3.5 font-mono text-lg text-ink placeholder:text-muted focus:border-amber focus:outline-none"
-              placeholder="••••••"
-            />
-          </label>
+          <h1 className="text-2xl font-semibold tracking-tight text-ink">
+            Entrar
+          </h1>
+          <p className="mt-1 text-[0.9375rem] text-ink-2">
+            Use o e-mail e a senha que o RH passou para você.
+          </p>
 
-          {state.error && (
-            <div className="flex items-center gap-2 rounded-xl border border-danger/30 bg-danger/10 px-3.5 py-3 text-sm text-danger">
-              <AlertIcon className="h-5 w-5 shrink-0" />
-              <span>{state.error}</span>
-            </div>
-          )}
+          <form action={formAction} className="mt-7 flex flex-col gap-4">
+            <Campo rotulo="E-mail">
+              <input
+                name="email"
+                type="email"
+                inputMode="email"
+                autoComplete="username"
+                autoCapitalize="none"
+                spellCheck={false}
+                required
+                className="campo min-h-[3rem]"
+                placeholder="nome@empresa.com"
+              />
+            </Campo>
 
-          <SubmitButton />
-        </form>
+            <Campo rotulo="Senha">
+              <div className="relative">
+                <input
+                  name="senha"
+                  type={verSenha ? "text" : "password"}
+                  autoComplete="current-password"
+                  required
+                  className="campo min-h-[3rem] pr-12"
+                />
+                <button
+                  type="button"
+                  onClick={() => setVerSenha((v) => !v)}
+                  aria-label={verSenha ? "Esconder senha" : "Mostrar senha"}
+                  aria-pressed={verSenha}
+                  className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-lg text-ink-3 hover:text-ink"
+                >
+                  {verSenha ? (
+                    <EyeOffIcon className="h-5 w-5" />
+                  ) : (
+                    <EyeIcon className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
+            </Campo>
 
-        <p className="mt-10 text-center text-xs text-muted">
-          {EMPLOYEE.company}
-          <br />
-          <span className="text-muted/60">Controle de jornada · j2aponto</span>
-        </p>
-      </div>
-    </main>
+            {state.error && <Aviso tom="erro">{state.error}</Aviso>}
+
+            <Entrar />
+          </form>
+
+          <p className="mt-8 text-sm leading-relaxed text-ink-3">
+            Esqueceu a senha ou é seu primeiro acesso? Procure o RH da sua
+            empresa.
+          </p>
+        </div>
+      </main>
+    </div>
   );
 }

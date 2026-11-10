@@ -1,47 +1,46 @@
-/** Marca do app — um "carimbo" com relógio, reforçando a metáfora do ponto. */
-export function LogoMark({ size = 64 }: { size?: number }) {
+/** Símbolo: ponteiros de relógio dentro de um quadrado — "bater o ponto". */
+export function LogoMark({
+  size = 28,
+  invertido = false,
+}: {
+  size?: number;
+  invertido?: boolean;
+}) {
+  const fundo = invertido ? "#FFFFFF" : "#0E4F5E";
+  const traco = invertido ? "#0E4F5E" : "#FFFFFF";
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 64 64"
-      fill="none"
-      aria-hidden
-    >
-      <rect
-        x="4"
-        y="4"
-        width="56"
-        height="56"
-        rx="16"
-        fill="#1E232B"
-        stroke="#F5A623"
-        strokeWidth="2.5"
-      />
-      <circle
-        cx="32"
-        cy="32"
-        r="16"
-        stroke="#F5A623"
-        strokeWidth="2.5"
-      />
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" aria-hidden>
+      <rect width="32" height="32" rx="7" fill={fundo} />
       <path
-        d="M32 22v10l7 4"
-        stroke="#EDEFF2"
-        strokeWidth="2.5"
+        d="M16 8.500V16l5 3"
+        stroke={traco}
+        strokeWidth="2.600"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+      <circle cx="16" cy="24.500" r="1.400" fill={traco} />
     </svg>
   );
 }
 
-export function Wordmark({ className = "" }: { className?: string }) {
+/** Marca completa: símbolo + nome. */
+export function Marca({
+  invertido = false,
+  className = "",
+}: {
+  invertido?: boolean;
+  className?: string;
+}) {
   return (
-    <span
-      className={`font-mono text-2xl font-bold tracking-tight text-ink ${className}`}
-    >
-      j2a<span className="text-amber">ponto</span>
+    <span className={`inline-flex items-center gap-2 ${className}`}>
+      <LogoMark invertido={invertido} />
+      <span
+        className={`text-[1.0625rem] font-semibold tracking-tight ${
+          invertido ? "text-white" : "text-ink"
+        }`}
+      >
+        j2a<span className={invertido ? "text-white/70" : "text-brand"}>ponto</span>
+      </span>
     </span>
   );
 }

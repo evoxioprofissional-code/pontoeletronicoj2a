@@ -2,9 +2,15 @@
 
 import { useEffect, useRef, useState } from "react";
 import { CameraCapture } from "./CameraCapture";
-import { PinIcon, ScanFaceIcon, CheckIcon, AlertIcon } from "./icons";
+import { PinIcon, ScanFaceIcon, CheckIcon, TipoIcon } from "./icons";
+import { Aviso, botao } from "./ui";
 import { melhorCerca, TOLERANCIA_GPS_MAX_M } from "@/lib/geo";
-import { rotuloTipo, type TipoDB } from "@/lib/ponto";
+import {
+  acaoTipo,
+  confirmacaoTipo,
+  rotuloTipo,
+  type TipoDB,
+} from "@/lib/ponto";
 import { baterPonto, registrarFace } from "@/app/app/ponto-actions";
 
 export interface CercaCliente {
@@ -14,13 +20,7 @@ export interface CercaCliente {
   raio_metros: number;
 }
 
-interface Props {
-  cercas: CercaCliente[];
-  temFace: boolean;
-  proximoTipo: TipoDB;
-}
-
-type GeoFase =
+export type GeoFase =
   | "carregando"
   | "ok"
   | "negado" // permissão de localização bloqueada
@@ -28,6 +28,31 @@ type GeoFase =
   | "demorou" // tempo esgotado esperando o GPS
   | "sem_suporte" // navegador sem geolocalização ou sem https
   | "sem_cerca"; // empresa sem área cadastrada
+
+export interface GeoState {
+  fase: GeoFase;
+  lat?: number;
+  lng?: number;
+  precisao?: number;
+  dentro?: boolean;
+  distancia?: number;
+  raio?: number;
+  local?: string;
+}
+
+export interface ResultadoPonto {
+  tipo: TipoDB;
+  marcado_em: string;
+  cerca: string;
+}
+
+interface Props {
+  cercas: CercaCliente[];
+  temFace: boolean;
+  proximoTipo: TipoDB;
+  /** Só para pré-visualização de layout: fixa a localização e não usa o GPS. */
+  geoDemo?: GeoState;
+}
 
 /** O que mostrar e o que a pessoa deve FAZER em cada falha de localização. */
 const GEO_AJUDA: Record<
@@ -52,34 +77,25 @@ const GEO_AJUDA: Record<
   },
   sem_cerca: {
     titulo: "Área da fábrica não configurada",
-    acao: "Peça ao RH para cadastrar o local em Painel do administrador → Cerca virtual.",
+    acao: "Peça ao RH para cadastrar o local no Painel do RH, em Local da fábrica.",
   },
 };
-interface GeoState {
-  fase: GeoFase;
-  lat?: number;
-  lng?: number;
-  precisao?: number;
-  dentro?: boolean;
-  distancia?: number;
-  raio?: number;
-}
 
-export function PontoCliente({ cercas, temFace, proximoTipo }: Props) {
-  const [geo, setGeo] = useState<GeoState>({ fase: "carregando" });
+const ERRO_REDE =
+  "Sem conexão com o servidor. Verifique sua internet e tente de novo. Se continuar, feche e abra o app.";
+
+export function PontoCliente({ cercas, temFace, proximoTipo, geoDemo }: Props) {
+  const [geo, setGeo] = useState<GeoState>(geoDemo ?? { fase: "carregando" });
   const [modal, setModal] = useState<null | "cadastro" | "ponto">(null);
   const [ocupado, setOcupado] = useState(false);
   // Trava síncrona contra envio duplo (o estado só muda no próximo render).
   const enviandoRef = useRef(false);
   const [tentativaGeo, setTentativaGeo] = useState(0);
   const [erro, setErro] = useState<string | null>(null);
-  const [resultado, setResultado] = useState<null | {
-    tipo: TipoDB;
-    marcado_em: string;
-    cerca: string;
-  }>(null);
+  const [resultado, setResultado] = useState<ResultadoPonto | null>(null);
 
   useEffect(() => {
+    if (geoDemo) return;
     if (cercas.length === 0) {
       setGeo({ fase: "sem_cerca" });
       return;
@@ -101,6 +117,7 @@ export function PontoCliente({ cercas, temFace, proximoTipo }: Props) {
           dentro: r?.dentro ?? false,
           distancia: r?.distancia,
           raio: r?.cerca.raio_metros,
+          local: r?.cerca.nome,
         });
       },
       (err) => {
@@ -118,22 +135,9 @@ export function PontoCliente({ cercas, temFace, proximoTipo }: Props) {
     return () => navigator.geolocation.clearWatch(id);
     // cercas vem do servidor; a chave evita reiniciar o GPS a cada render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(cercas), tentativaGeo]);
+  }, [JSON.stringify(cercas), tentativaGeo, geoDemo]);
 
   const podeBater = temFace && geo.fase === "ok" && geo.dentro === true;
-
-  // Permite acionar o fluxo pela barra inferior (botão central).
-  useEffect(() => {
-    const handler = () => {
-      setErro(null);
-      if (!temFace) return setModal("cadastro");
-      if (podeBater) return setModal("ponto");
-      setErro(motivoBloqueio(geo));
-    };
-    window.addEventListener("j2a:bater", handler);
-    return () => window.removeEventListener("j2a:bater", handler);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [temFace, podeBater, geo.fase, geo.dentro]);
 
   async function aoCadastrar(descriptor: number[]) {
     if (enviandoRef.current) return;
@@ -158,7 +162,8 @@ export function PontoCliente({ cercas, temFace, proximoTipo }: Props) {
 
   async function aoBater(descriptor: number[]) {
     if (geo.lat == null || geo.lng == null) {
-      setErro("Localização indisponível.");
+      setModal(null);
+      setErro("Localização indisponível. Aguarde o GPS e tente de novo.");
       return;
     }
     if (enviandoRef.current) return;
@@ -182,8 +187,7 @@ export function PontoCliente({ cercas, temFace, proximoTipo }: Props) {
         setResultado({ tipo: r.tipo, marcado_em: r.marcado_em, cerca: r.cerca });
       }
     } catch {
-      // Sem internet, ou o app foi atualizado enquanto estava aberto. Antes
-      // isso deixava a tela travada em "Aguarde…" sem dizer nada.
+      // Sem internet, ou o app foi atualizado enquanto estava aberto.
       setErro(ERRO_REDE);
     } finally {
       enviandoRef.current = false;
@@ -193,25 +197,47 @@ export function PontoCliente({ cercas, temFace, proximoTipo }: Props) {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Geofence ao vivo */}
-      <GeofenceLive
-        geo={geo}
-        onTentar={() => setTentativaGeo((n) => n + 1)}
-      />
+    <div className="flex flex-col gap-3">
+      <Localizacao geo={geo} onTentar={() => setTentativaGeo((n) => n + 1)} />
 
-      {/* Cadastro facial pendente */}
-      {!temFace && (
-        <div className="rounded-2xl border border-amber/25 bg-amber/5 p-4">
-          <p className="mb-3 text-sm text-amber">
-            Cadastre seu rosto para poder bater o ponto por reconhecimento facial.
+      {temFace ? (
+        <>
+          <button
+            type="button"
+            onClick={() => {
+              setErro(null);
+              setModal("ponto");
+            }}
+            disabled={!podeBater}
+            className={botao("primario", "lg", "w-full")}
+          >
+            <TipoIcon tipo={proximoTipo} className="h-5 w-5" />
+            {acaoTipo(proximoTipo)}
+          </button>
+          <p className="text-center text-sm text-ink-3">
+            {podeBater
+              ? "Vamos confirmar seu rosto antes de registrar."
+              : geo.fase === "carregando"
+                ? "O botão libera assim que acharmos sua localização."
+                : geo.fase === "ok"
+                  ? "O botão libera quando você estiver dentro da área da fábrica."
+                  : "O botão libera quando a localização estiver funcionando."}
+          </p>
+        </>
+      ) : (
+        <div className="rounded-lg border border-brand-line bg-brand-tint p-4">
+          <p className="mb-1 font-semibold text-ink">Cadastre seu rosto</p>
+          <p className="mb-3 text-sm text-ink-2">
+            É só uma vez. Depois disso você registra o ponto olhando para a
+            câmera.
           </p>
           <button
+            type="button"
             onClick={() => {
               setErro(null);
               setModal("cadastro");
             }}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-amber px-5 py-4 text-base font-semibold text-graphite shadow-amber-glow transition hover:bg-amber-soft active:scale-[0.99]"
+            className={botao("primario", "lg", "w-full")}
           >
             <ScanFaceIcon className="h-5 w-5" />
             Cadastrar meu rosto
@@ -219,43 +245,12 @@ export function PontoCliente({ cercas, temFace, proximoTipo }: Props) {
         </div>
       )}
 
-      {/* Bater ponto */}
-      {temFace && (
-        <div>
-          <button
-            onClick={() => {
-              setErro(null);
-              setModal("ponto");
-            }}
-            disabled={!podeBater}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-amber px-5 py-5 text-lg font-semibold text-graphite shadow-amber-glow transition hover:bg-amber-soft active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-steel disabled:text-muted disabled:shadow-none"
-          >
-            <ScanFaceIcon className="h-6 w-6" />
-            Bater Ponto
-            <span className="ml-1 rounded-md bg-graphite/20 px-2 py-0.5 font-mono text-xs">
-              {rotuloTipo(proximoTipo)}
-            </span>
-          </button>
-          {!podeBater && geo.fase !== "carregando" && (
-            <p className="mt-2 text-center text-sm text-danger">
-              {motivoBloqueio(geo)}
-            </p>
-          )}
-        </div>
-      )}
+      {erro && <Aviso tom="erro">{erro}</Aviso>}
 
-      {erro && (
-        <div className="flex items-center gap-2 rounded-xl border border-danger/30 bg-danger/10 px-3.5 py-3 text-sm text-danger">
-          <AlertIcon className="h-5 w-5 shrink-0" />
-          <span>{erro}</span>
-        </div>
-      )}
-
-      {/* Câmera */}
       {modal === "cadastro" && (
         <CameraCapture
           titulo="Cadastrar rosto"
-          instrucao="Centralize o rosto no guia, com boa iluminação."
+          instrucao="Centralize o rosto na moldura, em um lugar bem iluminado."
           acaoLabel="Cadastrar rosto"
           ocupado={ocupado}
           onDescritor={aoCadastrar}
@@ -264,9 +259,9 @@ export function PontoCliente({ cercas, temFace, proximoTipo }: Props) {
       )}
       {modal === "ponto" && (
         <CameraCapture
-          titulo="Reconhecimento facial"
+          titulo={acaoTipo(proximoTipo)}
           instrucao="Siga as instruções na tela."
-          acaoLabel="Confirmar e bater ponto"
+          acaoLabel="Confirmar"
           ocupado={ocupado}
           provaDeVida
           onDescritor={aoBater}
@@ -274,9 +269,8 @@ export function PontoCliente({ cercas, temFace, proximoTipo }: Props) {
         />
       )}
 
-      {/* Confirmação com carimbo */}
       {resultado && (
-        <StampConfirm
+        <Comprovante
           resultado={resultado}
           onFechar={() => setResultado(null)}
         />
@@ -285,136 +279,155 @@ export function PontoCliente({ cercas, temFace, proximoTipo }: Props) {
   );
 }
 
-const ERRO_REDE =
-  "Sem conexão com o servidor. Verifique sua internet e tente de novo. Se continuar, feche e abra o app.";
-
-/** Frase curta explicando por que o botão de bater ponto está bloqueado. */
-function motivoBloqueio(geo: GeoState): string {
-  if (geo.fase === "carregando") return "Aguarde, localizando você…";
-  if (geo.fase === "ok") {
-    return geo.dentro
-      ? ""
-      : `Você está a ${Math.round(geo.distancia ?? 0)} m do centro da fábrica (o limite é ${geo.raio ?? "?"} m). Aproxime-se para registrar.`;
-  }
-  return GEO_AJUDA[geo.fase].titulo + ". " + GEO_AJUDA[geo.fase].acao;
-}
-
-function GeofenceLive({
+/** Faixa de localização: diz onde a pessoa está e o que fazer se algo falhar. */
+function Localizacao({
   geo,
   onTentar,
 }: {
   geo: GeoState;
   onTentar: () => void;
 }) {
-  let dentro = false;
-  let texto: string;
-  let detalhe: string | null = null;
-  let podeTentar = false;
-
   if (geo.fase === "carregando") {
-    texto = "Localizando você…";
-  } else if (geo.fase === "ok") {
-    detalhe = `GPS ±${Math.round(geo.precisao ?? 0)} m · raio da área ${geo.raio ?? "?"} m`;
-    if (geo.dentro) {
-      dentro = true;
-      texto = `Dentro da área — ${Math.round(geo.distancia ?? 0)} m`;
-    } else {
-      texto = `Fora da área permitida — ${Math.round(geo.distancia ?? 0)} m`;
-      if ((geo.precisao ?? 0) > TOLERANCIA_GPS_MAX_M) {
-        detalhe += " — sinal fraco, vá para perto de uma janela/porta";
-      }
-    }
-  } else {
-    texto = GEO_AJUDA[geo.fase].titulo;
-    detalhe = GEO_AJUDA[geo.fase].acao;
-    podeTentar = geo.fase !== "sem_cerca" && geo.fase !== "sem_suporte";
+    return (
+      <div
+        role="status"
+        className="flex items-center gap-2.5 rounded-lg border border-line bg-paper px-3.5 py-3 text-sm text-ink-2"
+      >
+        <span className="h-2 w-2 animate-pulse-dot rounded-full bg-brand" />
+        Procurando sua localização…
+      </div>
+    );
   }
 
+  if (geo.fase === "ok") {
+    const dist = Math.round(geo.distancia ?? 0);
+    const precisao = Math.round(geo.precisao ?? 0);
+    const sinalFraco = !geo.dentro && precisao > TOLERANCIA_GPS_MAX_M;
+    return (
+      <div
+        role="status"
+        className={`flex items-start gap-2.5 rounded-lg border px-3.5 py-3 text-sm ${
+          geo.dentro
+            ? "border-ok-line bg-ok-tint text-ok"
+            : "border-danger-line bg-danger-tint text-danger"
+        }`}
+      >
+        <PinIcon className="mt-0.5 h-[1.125rem] w-[1.125rem] shrink-0" />
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold">
+            {geo.dentro
+              ? `Você está em ${geo.local ?? "área permitida"}`
+              : `Fora da área — a ${dist} m da fábrica`}
+          </p>
+          <p className="mt-0.5 text-[0.8125rem] opacity-90">
+            {geo.dentro
+              ? `Precisão do GPS: ±${precisao} m`
+              : sinalFraco
+                ? `Sinal de GPS fraco (±${precisao} m). Vá para perto de uma porta ou janela.`
+                : `O limite é ${geo.raio ?? "?"} m. Precisão do GPS: ±${precisao} m.`}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const ajuda = GEO_AJUDA[geo.fase];
+  const podeTentar = geo.fase !== "sem_cerca" && geo.fase !== "sem_suporte";
   return (
-    <div
-      className={`flex items-start gap-2.5 rounded-xl border px-3.5 py-3 text-sm font-medium ${
-        dentro
-          ? "border-signal/25 bg-signal/10 text-signal"
-          : geo.fase === "carregando"
-            ? "border-steel-line bg-steel text-muted"
-            : "border-danger/30 bg-danger/10 text-danger"
-      }`}
-      role="status"
-    >
-      <PinIcon className="mt-0.5 h-5 w-5 shrink-0" />
-      <span className="flex flex-1 flex-col gap-1">
-        <span>{texto}</span>
-        {detalhe && (
-          <span className="text-xs font-normal opacity-80">{detalhe}</span>
-        )}
-        {podeTentar && (
-          <button
-            type="button"
-            onClick={onTentar}
-            className="mt-1 self-start rounded-lg bg-danger/15 px-3 py-1.5 text-xs font-semibold text-danger ring-1 ring-danger/40"
-          >
-            Tentar novamente
-          </button>
-        )}
-      </span>
+    <Aviso tom="erro">
+      <p className="font-semibold">{ajuda.titulo}</p>
+      <p className="mt-0.5">{ajuda.acao}</p>
+      {podeTentar && (
+        <button
+          type="button"
+          onClick={onTentar}
+          className="mt-2 rounded-md border border-danger-line bg-surface px-3 py-1.5 text-sm font-semibold text-danger"
+        >
+          Tentar novamente
+        </button>
+      )}
+    </Aviso>
+  );
+}
+
+const DATA_COMPROVANTE = new Intl.DateTimeFormat("pt-BR", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+});
+const HORA_COMPROVANTE = new Intl.DateTimeFormat("pt-BR", {
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+});
+
+function LinhaComprovante({ rotulo, valor }: { rotulo: string; valor: string }) {
+  return (
+    <div className="flex items-baseline gap-2 py-1.5">
+      <dt className="text-sm text-ink-3">{rotulo}</dt>
+      <span
+        aria-hidden
+        className="mb-1 flex-1 border-b border-dotted border-line-strong"
+      />
+      <dd className="num text-right text-sm font-medium text-ink">{valor}</dd>
     </div>
   );
 }
 
-function StampConfirm({
+/** Tela de confirmação, com cara de comprovante de papel. */
+export function Comprovante({
   resultado,
   onFechar,
 }: {
-  resultado: { tipo: TipoDB; marcado_em: string; cerca: string };
+  resultado: ResultadoPonto;
   onFechar: () => void;
 }) {
   const d = new Date(resultado.marcado_em);
-  const hora = `${String(d.getHours()).padStart(2, "0")}:${String(
-    d.getMinutes(),
-  ).padStart(2, "0")}:${String(d.getSeconds()).padStart(2, "0")}`;
-
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-8 bg-graphite px-6 text-center">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-signal">
-        Ponto registrado
-      </p>
-
-      <div className="relative flex h-64 w-64 items-center justify-center">
-        <div className="stamp-el pointer-events-none absolute inset-6 rounded-[50%] border-2 border-amber/50 animate-stamp-ripple" />
-        <div className="stamp-el animate-stamp-impact">
-          <div className="animate-card-shake">
-            <div className="relative flex h-52 w-52 flex-col items-center justify-center gap-2 rounded-[50%] border-[3px] border-amber bg-amber/5 px-6 text-center shadow-[0_0_0_2px_rgba(245,166,35,0.25)]">
-              <span className="absolute inset-2 rounded-[50%] border border-amber/40" />
-              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber">
-                Ponto · j2aponto
-              </p>
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-amber text-graphite">
-                <CheckIcon className="h-8 w-8" strokeWidth={2.5} />
-              </div>
-              <p className="text-lg font-bold leading-tight text-ink">
-                {rotuloTipo(resultado.tipo)}
-              </p>
-              <p className="font-mono text-2xl font-bold tabular-nums text-ink">
-                {hora}
-              </p>
-            </div>
-          </div>
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="comprovante-titulo"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-y-auto bg-paper px-5 py-8"
+    >
+      <div className="w-full max-w-sm animate-fade-up">
+        <div className="mb-5 flex flex-col items-center text-center">
+          <span className="mb-4 flex h-14 w-14 animate-check-in items-center justify-center rounded-full bg-ok text-white">
+            <CheckIcon className="h-8 w-8" strokeWidth={2.4} />
+          </span>
+          <h2
+            id="comprovante-titulo"
+            className="text-xl font-semibold text-ink"
+          >
+            {confirmacaoTipo(resultado.tipo)}
+          </h2>
+          <p className="num mt-1 text-[2.75rem] font-medium leading-none text-ink">
+            {HORA_COMPROVANTE.format(d).slice(0, 5)}
+          </p>
         </div>
-      </div>
 
-      <div className="flex items-center gap-2 text-signal">
-        <PinIcon className="h-4 w-4" />
-        <span className="text-sm font-medium">
-          {resultado.cerca} — dentro da área
-        </span>
-      </div>
+        <div className="rounded-xl border border-line bg-surface px-5 py-4">
+          <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-ink-3">
+            Comprovante
+          </p>
+          <dl>
+            <LinhaComprovante rotulo="Tipo" valor={rotuloTipo(resultado.tipo)} />
+            <LinhaComprovante rotulo="Data" valor={DATA_COMPROVANTE.format(d)} />
+            <LinhaComprovante rotulo="Hora" valor={HORA_COMPROVANTE.format(d)} />
+            <LinhaComprovante rotulo="Local" valor={resultado.cerca} />
+            <LinhaComprovante rotulo="Verificação" valor="Rosto + GPS" />
+          </dl>
+        </div>
 
-      <button
-        onClick={onFechar}
-        className="mt-2 w-full max-w-xs rounded-2xl bg-amber px-5 py-4 text-base font-semibold text-graphite shadow-amber-glow transition hover:bg-amber-soft active:scale-[0.99]"
-      >
-        Concluir
-      </button>
+        <button
+          type="button"
+          onClick={onFechar}
+          autoFocus
+          className={botao("primario", "lg", "mt-5 w-full")}
+        >
+          Concluir
+        </button>
+      </div>
     </div>
   );
 }

@@ -8,7 +8,8 @@ import {
   INSTRUCAO_VIDA,
   type EtapaVida,
 } from "@/lib/face/liveness";
-import { AlertIcon, ArrowLeft } from "./icons";
+import { AlertIcon, XIcon } from "./icons";
+import { botao } from "./ui";
 
 interface Props {
   titulo: string;
@@ -28,6 +29,8 @@ type Fase = "carregando" | "pronto" | "erro";
 
 /** Tempo máximo para concluir a prova de vida antes de pedir nova tentativa. */
 const TEMPO_MAX_PROVA_MS = 25000;
+
+const PASSO: Record<EtapaVida, number> = { frente: 1, virar: 2, voltar: 3, ok: 3 };
 
 /** Traduz a falha de câmera/modelo em uma instrução que a pessoa consegue seguir. */
 function mensagemErroCamera(e: unknown): string {
@@ -181,7 +184,7 @@ export function CameraCapture({
     try {
       const d = await extrairDescritor(videoRef.current);
       if (!d) {
-        setMsg("Rosto não detectado. Centralize o rosto no guia.");
+        setMsg("Rosto não detectado. Centralize o rosto na moldura.");
         return;
       }
       onDescritor(d);
@@ -194,27 +197,32 @@ export function CameraCapture({
   }
 
   const processando = capturando || ocupado;
+  const passo = PASSO[etapa];
 
   return (
     <div
       data-captura
-      className="fixed inset-0 z-50 flex flex-col bg-graphite"
+      role="dialog"
+      aria-modal="true"
+      aria-label={titulo}
+      className="safe-t fixed inset-0 z-50 flex flex-col bg-paper"
     >
       {/* Topo */}
-      <div className="flex items-center gap-3 px-5 pb-3 pt-5">
+      <div className="flex h-14 shrink-0 items-center justify-between border-b border-line bg-surface px-4">
+        <h1 className="text-base font-semibold text-ink">{titulo}</h1>
         <button
+          type="button"
           onClick={onCancelar}
-          className="flex h-10 w-10 items-center justify-center rounded-xl bg-steel text-ink ring-1 ring-steel-line"
-          aria-label="Cancelar"
+          className="-mr-2 flex h-11 items-center gap-1.5 rounded-lg px-3 text-sm font-medium text-ink-2 hover:bg-paper"
         >
-          <ArrowLeft className="h-5 w-5" />
+          <XIcon className="h-5 w-5" />
+          Cancelar
         </button>
-        <h1 className="text-lg font-semibold text-ink">{titulo}</h1>
       </div>
 
-      {/* Viewfinder */}
-      <div className="relative mx-auto mt-2 w-full max-w-sm flex-1 px-5">
-        <div className="relative h-full overflow-hidden rounded-3xl border border-steel-line bg-black">
+      {/* Câmera */}
+      <div className="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col px-4 pt-4">
+        <div className="relative min-h-0 flex-1 overflow-hidden rounded-xl bg-ink">
           <video
             ref={videoRef}
             playsInline
@@ -222,94 +230,118 @@ export function CameraCapture({
             className="h-full w-full scale-x-[-1] object-cover"
           />
 
-          {/* Guia oval + anel de scan — grande, relativo ao viewfinder */}
-          <div className="pointer-events-none absolute inset-x-[10%] top-[7%] bottom-[13%]">
-            <div className="relative h-full w-full">
-              {fase === "pronto" && (
-                <div className="absolute inset-0 rounded-[50%] border-2 border-amber/70 animate-scan-ring" />
-              )}
+          {/* Moldura oval do rosto */}
+          {fase !== "erro" && (
+            <div className="pointer-events-none absolute inset-x-[12%] bottom-[12%] top-[8%]">
               <div
-                className={`absolute inset-0 rounded-[50%] border-[3px] border-dashed ${
-                  fase === "erro" ? "border-danger/70" : "border-ink/60"
+                className={`h-full w-full rounded-[50%] border-2 ${
+                  etapa === "ok" || (processando && fase === "pronto")
+                    ? "border-ok"
+                    : "border-white/80"
                 }`}
               />
             </div>
-          </div>
+          )}
 
-          {/* Estado de carregamento */}
           {fase === "carregando" && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/60">
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
               <div className="flex gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-full bg-amber animate-amber-pulse" />
-                <span className="h-2.5 w-2.5 rounded-full bg-amber animate-amber-pulse [animation-delay:200ms]" />
-                <span className="h-2.5 w-2.5 rounded-full bg-amber animate-amber-pulse [animation-delay:400ms]" />
+                <span className="h-2 w-2 animate-pulse-dot rounded-full bg-white" />
+                <span className="h-2 w-2 animate-pulse-dot rounded-full bg-white [animation-delay:200ms]" />
+                <span className="h-2 w-2 animate-pulse-dot rounded-full bg-white [animation-delay:400ms]" />
               </div>
-              <p className="text-sm text-muted">Carregando reconhecimento…</p>
+              <p className="text-sm text-white/80">Abrindo a câmera…</p>
             </div>
           )}
 
           {fase === "erro" && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/70 px-6 text-center">
-              <AlertIcon className="h-8 w-8 text-danger" />
-              <p className="text-sm text-danger">{msg}</p>
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
+              <AlertIcon className="h-8 w-8 text-white" />
+              <p className="text-sm leading-relaxed text-white">{msg}</p>
             </div>
           )}
 
           {processando && fase === "pronto" && (
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent px-4 pb-4 pt-8 text-center">
-              <p className="flex items-center justify-center gap-2 text-sm font-medium text-amber">
-                <span className="h-1.5 w-1.5 animate-amber-pulse rounded-full bg-amber" />
-                Processando…
-              </p>
-            </div>
+            <p className="absolute inset-x-0 bottom-0 bg-ink/70 px-4 py-2.5 text-center text-sm font-medium text-white">
+              {ocupado ? "Registrando…" : "Lendo seu rosto…"}
+            </p>
           )}
         </div>
       </div>
 
-      {/* Rodapé */}
-      <div className="px-5 pb-8 pt-4">
-        {provaDeVida && fase === "pronto" ? (
-          provaFalhou ? (
+      {/* Instruções / ação */}
+      <div className="safe-b mx-auto w-full max-w-md shrink-0 px-4 pt-4">
+        <div className="pb-3">
+          {fase === "erro" ? (
+            <button
+              type="button"
+              onClick={onCancelar}
+              className={botao("secundario", "lg", "w-full")}
+            >
+              Voltar
+            </button>
+          ) : provaDeVida ? (
+            provaFalhou ? (
+              <>
+                <p className="mb-3 text-center text-sm text-danger">
+                  Não conseguimos confirmar que é você. Fique em um lugar
+                  iluminado, tire boné ou máscara e siga as instruções.
+                </p>
+                <button
+                  type="button"
+                  onClick={tentarDeNovo}
+                  className={botao("primario", "lg", "w-full")}
+                >
+                  Tentar novamente
+                </button>
+              </>
+            ) : (
+              <div role="status" aria-live="polite" className="text-center">
+                <div
+                  className="mx-auto mb-3 flex max-w-[12rem] gap-1.5"
+                  aria-hidden
+                >
+                  {[1, 2, 3].map((n) => (
+                    <span
+                      key={n}
+                      className={`h-1 flex-1 rounded-full ${
+                        fase === "pronto" && n <= passo ? "bg-brand" : "bg-line"
+                      }`}
+                    />
+                  ))}
+                </div>
+                <p className="text-sm text-ink-3">
+                  {fase === "pronto" ? `Passo ${passo} de 3` : "Preparando…"}
+                </p>
+                <p className="mt-0.5 text-lg font-semibold text-ink">
+                  {fase !== "pronto"
+                    ? "Aguarde a câmera abrir"
+                    : ocupado
+                      ? "Registrando seu ponto…"
+                      : INSTRUCAO_VIDA[etapa]}
+                </p>
+                <p className="mt-1 min-h-[1.25rem] text-sm text-danger">
+                  {fase === "pronto" ? (msg ?? "") : ""}
+                </p>
+              </div>
+            )
+          ) : (
             <>
-              <p className="mb-3 text-center text-sm text-danger">
-                Não conseguimos confirmar que é você. Fique em um lugar
-                iluminado, tire boné/máscara e siga as instruções na tela.
-              </p>
+              <p className="mb-3 text-center text-sm text-ink-2">{instrucao}</p>
+              {msg && fase === "pronto" && (
+                <p className="mb-3 text-center text-sm text-danger">{msg}</p>
+              )}
               <button
-                onClick={tentarDeNovo}
-                className="inline-flex w-full items-center justify-center rounded-2xl bg-amber px-5 py-4 text-base font-semibold text-graphite shadow-amber-glow transition hover:bg-amber-soft active:scale-[0.99]"
+                type="button"
+                onClick={capturar}
+                disabled={fase !== "pronto" || processando}
+                className={botao("primario", "lg", "w-full")}
               >
-                Tentar novamente
+                {processando ? "Aguarde…" : acaoLabel}
               </button>
             </>
-          ) : (
-            <div role="status" aria-live="polite" className="text-center">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">
-                Passo {etapa === "frente" ? 1 : etapa === "virar" ? 2 : 3} de 3
-              </p>
-              <p className="text-lg font-semibold text-ink">
-                {ocupado ? "Registrando seu ponto…" : INSTRUCAO_VIDA[etapa]}
-              </p>
-              <p className="mt-2 min-h-[1.25rem] text-sm text-danger">
-                {msg ?? ""}
-              </p>
-            </div>
-          )
-        ) : (
-          <>
-            <p className="mb-3 text-center text-sm text-muted">{instrucao}</p>
-            {msg && fase === "pronto" && (
-              <p className="mb-3 text-center text-sm text-danger">{msg}</p>
-            )}
-            <button
-              onClick={capturar}
-              disabled={fase !== "pronto" || processando}
-              className="inline-flex w-full items-center justify-center rounded-2xl bg-amber px-5 py-4 text-base font-semibold text-graphite shadow-amber-glow transition hover:bg-amber-soft active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-steel disabled:text-muted disabled:shadow-none"
-            >
-              {processando ? "Aguarde…" : acaoLabel}
-            </button>
-          </>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

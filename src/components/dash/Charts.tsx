@@ -1,165 +1,152 @@
-"use client";
-
+// Gráficos do painel, feitos só com HTML/CSS.
+// (Antes usava a biblioteca recharts: ~118 kB de JavaScript, rótulos
+// inclinados e ilegíveis no celular. Rankings e proporções se leem melhor
+// como listas com barras.)
 import type { ReactNode } from "react";
-import {
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Legend,
-} from "recharts";
+import { Cartao } from "@/components/ui";
+import { formatarMinutos } from "@/lib/ponto";
 
 interface Serie {
   nome: string;
   valor: number;
 }
 
-const AXIS = "#8A93A3";
-const GRID = "#2A313B";
+function Vazio({ children }: { children: ReactNode }) {
+  return <p className="py-6 text-sm text-ink-3">{children}</p>;
+}
 
-export function Card({
+function Moldura({
   titulo,
+  descricao,
   children,
-  className = "",
 }: {
   titulo: string;
+  descricao?: string;
   children: ReactNode;
-  className?: string;
 }) {
   return (
-    <section
-      className={`rounded-2xl border border-steel-line bg-steel p-4 ${className}`}
-    >
-      <h3 className="mb-3 text-sm font-semibold text-ink">{titulo}</h3>
-      {children}
-    </section>
+    <Cartao className="p-5">
+      <h3 className="text-[0.9375rem] font-semibold text-ink">{titulo}</h3>
+      {descricao && <p className="mt-0.5 text-sm text-ink-3">{descricao}</p>}
+      <div className="mt-4">{children}</div>
+    </Cartao>
   );
 }
 
-export function minToHHMM(min: number): string {
-  const m = Math.max(0, Math.round(min));
-  return `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(
-    m % 60,
-  ).padStart(2, "0")}`;
-}
-
-function EmptyState() {
-  return (
-    <div className="flex h-[220px] items-center justify-center text-sm text-muted">
-      Sem dados no período.
-    </div>
-  );
-}
-
-export function BarCard({
+/** Ranking: nome, valor e uma barra proporcional ao maior valor. */
+export function RankCard({
   titulo,
+  descricao,
   data,
-  cor = "#F5A623",
   formato = "numero",
+  tom = "brand",
+  unidade,
+  vazio = "Sem dados neste mês.",
+  limite = 6,
 }: {
   titulo: string;
+  descricao?: string;
   data: Serie[];
-  cor?: string;
   formato?: "numero" | "tempo";
+  tom?: "brand" | "ok" | "danger";
+  unidade?: string;
+  vazio?: string;
+  limite?: number;
 }) {
-  const fmt = (v: number) => (formato === "tempo" ? minToHHMM(v) : String(v));
-  const vazio = data.length === 0 || data.every((d) => d.valor === 0);
+  const itens = data.filter((d) => d.valor > 0).slice(0, limite);
+  const max = Math.max(1, ...itens.map((d) => d.valor));
+  const fmt = (v: number) =>
+    formato === "tempo"
+      ? formatarMinutos(v)
+      : `${v}${unidade ? ` ${unidade}` : ""}`;
+  const cor =
+    tom === "ok" ? "bg-ok" : tom === "danger" ? "bg-danger" : "bg-brand";
+
   return (
-    <Card titulo={titulo}>
-      {vazio ? (
-        <EmptyState />
+    <Moldura titulo={titulo} descricao={descricao}>
+      {itens.length === 0 ? (
+        <Vazio>{vazio}</Vazio>
       ) : (
-        <ResponsiveContainer width="100%" height={220}>
-          <BarChart data={data} margin={{ top: 4, right: 8, bottom: 40, left: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke={GRID} vertical={false} />
-            <XAxis
-              dataKey="nome"
-              tick={{ fill: AXIS, fontSize: 10 }}
-              angle={-35}
-              textAnchor="end"
-              interval={0}
-              height={50}
-              stroke={GRID}
-            />
-            <YAxis
-              tick={{ fill: AXIS, fontSize: 10 }}
-              tickFormatter={fmt}
-              stroke={GRID}
-              width={44}
-            />
-            <Tooltip
-              formatter={(value) => [fmt(Number(value)), ""] as [string, string]}
-              contentStyle={{
-                background: "#14171C",
-                border: "1px solid #2A313B",
-                borderRadius: 8,
-                color: "#EDEFF2",
-              }}
-              labelStyle={{ color: "#8A93A3" }}
-              cursor={{ fill: "rgba(255,255,255,0.04)" }}
-            />
-            <Bar dataKey="valor" fill={cor} radius={[4, 4, 0, 0]} maxBarSize={38} />
-          </BarChart>
-        </ResponsiveContainer>
+        <ol className="flex flex-col gap-3">
+          {itens.map((d, i) => (
+            <li key={`${d.nome}-${i}`}>
+              <div className="flex items-baseline justify-between gap-3 text-sm">
+                <span className="min-w-0 truncate text-ink">{d.nome}</span>
+                <span className="num shrink-0 font-medium text-ink">
+                  {fmt(d.valor)}
+                </span>
+              </div>
+              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-line">
+                <div
+                  className={`h-full rounded-full ${cor}`}
+                  style={{ width: `${Math.max(2, (d.valor / max) * 100)}%` }}
+                />
+              </div>
+            </li>
+          ))}
+        </ol>
       )}
-    </Card>
+    </Moldura>
   );
 }
 
-export function PieCard({
+const CORES_PADRAO = ["#0E4F5E", "#7FB0B9", "#D2A24C", "#B8B2A7"];
+
+/** Proporção entre poucas categorias: uma barra dividida + legenda com números. */
+export function SplitCard({
   titulo,
+  descricao,
   data,
-  cores,
+  cores = CORES_PADRAO,
+  vazio = "Sem dados neste mês.",
 }: {
   titulo: string;
+  descricao?: string;
   data: Serie[];
-  cores: string[];
+  cores?: string[];
+  vazio?: string;
 }) {
-  const vazio = data.every((d) => d.valor === 0);
+  const total = data.reduce((a, d) => a + d.valor, 0);
   return (
-    <Card titulo={titulo}>
-      {vazio ? (
-        <EmptyState />
+    <Moldura titulo={titulo} descricao={descricao}>
+      {total === 0 ? (
+        <Vazio>{vazio}</Vazio>
       ) : (
-        <ResponsiveContainer width="100%" height={220}>
-          <PieChart>
-            <Pie
-              data={data}
-              dataKey="valor"
-              nameKey="nome"
-              cx="50%"
-              cy="50%"
-              innerRadius={45}
-              outerRadius={75}
-              paddingAngle={2}
-              stroke="none"
-              label={(p: { value?: number }) => `${p.value ?? ""}`}
-            >
-              {data.map((_, i) => (
-                <Cell key={i} fill={cores[i % cores.length]} />
-              ))}
-            </Pie>
-            <Tooltip
-              contentStyle={{
-                background: "#14171C",
-                border: "1px solid #2A313B",
-                borderRadius: 8,
-                color: "#EDEFF2",
-              }}
-            />
-            <Legend
-              wrapperStyle={{ fontSize: 12, color: AXIS }}
-              iconType="circle"
-            />
-          </PieChart>
-        </ResponsiveContainer>
+        <>
+          <div
+            className="flex h-2.5 gap-0.5 overflow-hidden rounded-full"
+            aria-hidden
+          >
+            {data.map((d, i) =>
+              d.valor > 0 ? (
+                <span
+                  key={d.nome}
+                  style={{
+                    width: `${(d.valor / total) * 100}%`,
+                    background: cores[i % cores.length],
+                  }}
+                />
+              ) : null,
+            )}
+          </div>
+          <ul className="mt-4 flex flex-col gap-2">
+            {data.map((d, i) => (
+              <li key={d.nome} className="flex items-center gap-2.5 text-sm">
+                <span
+                  aria-hidden
+                  className="h-2.5 w-2.5 shrink-0 rounded-sm"
+                  style={{ background: cores[i % cores.length] }}
+                />
+                <span className="min-w-0 flex-1 truncate text-ink">{d.nome}</span>
+                <span className="num font-medium text-ink">{d.valor}</span>
+                <span className="num w-10 text-right text-ink-3">
+                  {Math.round((d.valor / total) * 100)}%
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
-    </Card>
+    </Moldura>
   );
 }

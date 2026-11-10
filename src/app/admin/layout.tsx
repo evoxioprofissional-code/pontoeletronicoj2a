@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient, usuarioAtual } from "@/lib/supabase/server";
-import { Sidebar } from "@/components/dash/Sidebar";
+import { AdminShell } from "@/components/dash/AdminShell";
 
 export default async function AdminLayout({
   children,
@@ -17,10 +17,5 @@ export default async function AdminLayout({
     .single();
   if (!eu || (eu.papel !== "rh" && eu.papel !== "admin")) redirect("/app");
 
-  return (
-    <div className="flex min-h-screen bg-graphite text-ink">
-      <Sidebar />
-      <main className="min-w-0 flex-1">{children}</main>
-    </div>
-  );
+  return <AdminShell>{children}</AdminShell>;
 }

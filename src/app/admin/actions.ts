@@ -33,7 +33,8 @@ async function mesmaEmpresa(
 }
 
 function isoLocal(dia: string, hora: string): string | null {
-  const d = new Date(`${dia}T${hora}:00`);
+  // O RH digita o horário de Brasília; o servidor roda em UTC.
+  const d = new Date(`${dia}T${hora}:00-03:00`);
   return isNaN(+d) ? null : d.toISOString();
 }
 

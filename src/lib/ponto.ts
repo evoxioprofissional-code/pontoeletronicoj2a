@@ -11,8 +11,8 @@ export const CICLO: TipoDB[] = [
 
 const ROTULOS: Record<TipoDB, string> = {
   entrada: "Entrada",
-  inicio_intervalo: "Início Intervalo",
-  fim_intervalo: "Fim Intervalo",
+  inicio_intervalo: "Início do intervalo",
+  fim_intervalo: "Fim do intervalo",
   saida: "Saída",
 };
 
@@ -96,8 +96,22 @@ export function minutosTrabalhados(
       }
     }
   }
-  if (inicio !== null) total += Math.max(0, +agora - inicio);
+  // Período em aberto só conta se for de hoje. Num dia antigo em que faltou
+  // registrar a saída, contar "até agora" somava dezenas de horas falsas.
+  if (inicio !== null && mesmoDia(new Date(inicio), agora)) {
+    total += Math.max(0, +agora - inicio);
+  }
   return Math.floor(total / 60000);
+}
+
+const DIA_FMT = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "America/Sao_Paulo",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+function mesmoDia(a: Date, b: Date): boolean {
+  return DIA_FMT.format(a) === DIA_FMT.format(b);
 }
 
 /** Formata minutos como "8h 06min". */
@@ -151,4 +165,81 @@ export function horaLocal(iso: string | Date): string {
     hour: "2-digit",
     minute: "2-digit",
   }).format(new Date(iso));
+}
+
+/** Texto do botão para cada tipo — diz o que vai acontecer ao tocar. */
+const ACOES: Record<TipoDB, string> = {
+  entrada: "Registrar entrada",
+  inicio_intervalo: "Iniciar intervalo",
+  fim_intervalo: "Voltar do intervalo",
+  saida: "Registrar saída",
+};
+
+export function acaoTipo(t: TipoDB): string {
+  return ACOES[t];
+}
+
+/** Frase de confirmação ("Entrada registrada"). */
+const CONFIRMACOES: Record<TipoDB, string> = {
+  entrada: "Entrada registrada",
+  inicio_intervalo: "Intervalo iniciado",
+  fim_intervalo: "Volta do intervalo registrada",
+  saida: "Saída registrada",
+};
+
+export function confirmacaoTipo(t: TipoDB): string {
+  return CONFIRMACOES[t];
+}
+
+export interface Periodo {
+  inicio: string; // ISO
+  fim: string | null; // null = ainda em aberto
+}
+
+/** Agrupa as marcações do dia em períodos trabalhados (entrada → saída/intervalo). */
+export function periodosTrabalhados(marcacoes: MarcacaoLite[]): Periodo[] {
+  const ordenadas = [...marcacoes].sort(
+    (a, b) => +new Date(a.marcado_em) - +new Date(b.marcado_em),
+  );
+  const periodos: Periodo[] = [];
+  let aberto: string | null = null;
+  for (const m of ordenadas) {
+    if (m.tipo === "entrada" || m.tipo === "fim_intervalo") {
+      if (aberto) periodos.push({ inicio: aberto, fim: null });
+      aberto = m.marcado_em;
+    } else if (aberto) {
+      periodos.push({ inicio: aberto, fim: m.marcado_em });
+      aberto = null;
+    }
+  }
+  if (aberto) periodos.push({ inicio: aberto, fim: null });
+  return periodos;
+}
+
+/**
+ * Passos do dia para a linha do tempo: as marcações já feitas e, se o ciclo
+ * (entrada → intervalo → volta → saída) não terminou, os passos que faltam.
+ */
+export interface PassoDia {
+  tipo: TipoDB;
+  marcado_em: string | null; // null = ainda não aconteceu
+  proximo: boolean;
+}
+
+export function passosDoDia(marcacoes: MarcacaoLite[]): PassoDia[] {
+  const ordenadas = [...marcacoes].sort(
+    (a, b) => +new Date(a.marcado_em) - +new Date(b.marcado_em),
+  );
+  const passos: PassoDia[] = ordenadas.map((m) => ({
+    tipo: m.tipo,
+    marcado_em: m.marcado_em,
+    proximo: false,
+  }));
+  const ultimo = ordenadas[ordenadas.length - 1]?.tipo;
+  if (ultimo === "saida") return passos; // jornada encerrada
+  const de = ultimo ? CICLO.indexOf(ultimo) + 1 : 0;
+  for (let i = de; i < CICLO.length; i++) {
+    passos.push({ tipo: CICLO[i], marcado_em: null, proximo: i === de });
+  }
+  return passos;
 }

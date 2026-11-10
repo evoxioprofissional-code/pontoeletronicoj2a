@@ -1,24 +1,25 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import "./globals.css";
 
-const sans = Inter({
+const sans = IBM_Plex_Sans({
   subsets: ["latin"],
+  weight: ["400", "500", "600"],
   variable: "--font-sans",
   display: "swap",
 });
 
-const mono = JetBrains_Mono({
+const mono = IBM_Plex_Mono({
   subsets: ["latin"],
+  weight: ["500", "600"],
   variable: "--font-mono",
   display: "swap",
 });
 
 export const metadata: Metadata = {
   title: "j2aponto — Registro de ponto",
-  description:
-    "Registro de ponto por reconhecimento facial e localização.",
+  description: "Registro de ponto por reconhecimento facial e localização.",
   manifest: "/manifest.webmanifest",
   icons: {
     icon: "/icon.svg",
@@ -27,16 +28,15 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: "j2aponto",
-    statusBarStyle: "black-translucent",
+    statusBarStyle: "default",
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#14171C",
+  themeColor: "#F6F4F0",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -46,7 +46,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR" className={`${sans.variable} ${mono.variable}`}>
-      <body className="font-sans antialiased">
+      <body className="min-h-screen font-sans antialiased">
         {children}
         <ServiceWorkerRegister />
       </body>

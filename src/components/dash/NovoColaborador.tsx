@@ -2,29 +2,24 @@
 
 import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
-import { criarFuncionario, type NovoState } from "@/app/admin/colaboradores/actions";
-import { AlertIcon, CheckIcon } from "@/components/icons";
+import {
+  criarFuncionario,
+  type NovoState,
+} from "@/app/admin/colaboradores/actions";
+import { Aviso, Campo, Cartao, botao } from "@/components/ui";
+import { PlusIcon } from "@/components/icons";
 
-function Submit() {
+function Enviar() {
   const { pending } = useFormStatus();
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="rounded-xl bg-amber px-5 py-2.5 text-sm font-semibold text-graphite transition hover:bg-amber-soft disabled:opacity-60"
-    >
+    <button type="submit" disabled={pending} className={botao("primario")}>
       {pending ? "Cadastrando…" : "Cadastrar colaborador"}
     </button>
   );
 }
 
-const campo =
-  "w-full rounded-lg border border-steel-line bg-graphite px-3 py-2 text-ink placeholder:text-muted focus:border-amber focus:outline-none";
-const rotulo =
-  "text-xs font-semibold uppercase tracking-wider text-muted";
-
-export function NovoColaborador() {
-  const [aberto, setAberto] = useState(false);
+export function NovoColaborador({ aberto: abertoInicial = false }: { aberto?: boolean }) {
+  const [aberto, setAberto] = useState(abertoInicial);
   const [state, formAction] = useFormState<NovoState, FormData>(
     criarFuncionario,
     {},
@@ -32,109 +27,121 @@ export function NovoColaborador() {
 
   if (!aberto) {
     return (
-      <button
-        onClick={() => setAberto(true)}
-        className="mb-4 w-full rounded-2xl border border-dashed border-amber/40 bg-amber/5 px-4 py-3 text-sm font-semibold text-amber transition hover:bg-amber/10"
-      >
-        + Novo colaborador
-      </button>
+      <div className="mb-4">
+        <button
+          type="button"
+          onClick={() => setAberto(true)}
+          className={botao("primario", "md", "w-full sm:w-auto")}
+        >
+          <PlusIcon className="h-[1.125rem] w-[1.125rem]" />
+          Novo colaborador
+        </button>
+      </div>
     );
   }
 
   return (
-    <div className="mb-4 rounded-2xl border border-steel-line bg-steel p-5">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="font-semibold text-ink">Novo colaborador</h2>
+    <Cartao className="mb-5 p-5 sm:p-6">
+      <div className="mb-5 flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-semibold text-ink">Novo colaborador</h2>
+          <p className="mt-0.5 text-sm text-ink-3">
+            Cria o cadastro e o login. Passe o e-mail e a senha para a pessoa.
+          </p>
+        </div>
         <button
+          type="button"
           onClick={() => setAberto(false)}
-          className="text-sm text-muted hover:text-ink"
+          className={botao("texto", "md", "!min-h-0 !px-0 shrink-0")}
         >
           Fechar
         </button>
       </div>
 
-      <form action={formAction} className="flex flex-col gap-3">
-        <label className="flex flex-col gap-1">
-          <span className={rotulo}>Nome completo</span>
-          <input name="nome" required className={campo} />
-        </label>
+      <form action={formAction} className="grid gap-4 sm:grid-cols-2">
+        <Campo rotulo="Nome completo" className="sm:col-span-2">
+          <input name="nome" required autoComplete="off" className="campo" />
+        </Campo>
 
-        <div className="grid grid-cols-2 gap-3">
-          <label className="flex flex-col gap-1">
-            <span className={rotulo}>Matrícula</span>
-            <input name="matricula" required className={`${campo} font-mono`} />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className={rotulo}>Cargo</span>
-            <input name="cargo" className={campo} />
-          </label>
-        </div>
+        <Campo rotulo="Matrícula">
+          <input
+            name="matricula"
+            required
+            autoComplete="off"
+            className="campo num"
+          />
+        </Campo>
+        <Campo rotulo="Cargo">
+          <input name="cargo" autoComplete="off" className="campo" />
+        </Campo>
 
-        <label className="flex flex-col gap-1">
-          <span className={rotulo}>E-mail (login)</span>
-          <input name="email" type="email" required className={campo} />
-        </label>
-
-        <label className="flex flex-col gap-1">
-          <span className={rotulo}>Senha inicial</span>
+        <Campo rotulo="E-mail de login">
+          <input
+            name="email"
+            type="email"
+            required
+            autoComplete="off"
+            autoCapitalize="none"
+            className="campo"
+          />
+        </Campo>
+        <Campo rotulo="Senha inicial" dica="Mínimo de 6 caracteres.">
           <input
             name="senha"
             type="text"
             required
             minLength={6}
-            placeholder="mín. 6 caracteres"
-            className={campo}
+            autoComplete="off"
+            className="campo"
           />
-        </label>
+        </Campo>
 
-        <div className="grid grid-cols-3 gap-3">
-          <label className="col-span-1 flex flex-col gap-1">
-            <span className={rotulo}>Perfil</span>
-            <select name="papel" defaultValue="funcionario" className={campo}>
-              <option value="funcionario">Funcionário</option>
-              <option value="rh">RH</option>
-              <option value="admin">Admin</option>
-            </select>
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className={rotulo}>Horas/dia</span>
+        <Campo rotulo="Acesso">
+          <select name="papel" defaultValue="funcionario" className="campo">
+            <option value="funcionario">Funcionário</option>
+            <option value="rh">RH</option>
+            <option value="admin">Administrador</option>
+          </select>
+        </Campo>
+
+        <fieldset>
+          <legend className="mb-1.5 text-sm font-medium text-ink-2">
+            Jornada diária
+          </legend>
+          <div className="flex items-center gap-2">
             <input
               name="horas"
               type="number"
+              inputMode="numeric"
               min={0}
               max={24}
               defaultValue={8}
-              className={`${campo} font-mono`}
+              aria-label="Horas"
+              className="campo num w-20"
             />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className={rotulo}>Minutos</span>
+            <span className="text-sm text-ink-3">h</span>
             <input
               name="minutos"
               type="number"
+              inputMode="numeric"
               min={0}
               max={59}
               defaultValue={0}
-              className={`${campo} font-mono`}
+              aria-label="Minutos"
+              className="campo num w-20"
             />
-          </label>
-        </div>
+            <span className="text-sm text-ink-3">min</span>
+          </div>
+        </fieldset>
 
-        {state.error && (
-          <p className="flex items-center gap-2 text-sm text-danger">
-            <AlertIcon className="h-4 w-4 shrink-0" /> {state.error}
-          </p>
-        )}
-        {state.ok && (
-          <p className="flex items-center gap-2 text-sm text-signal">
-            <CheckIcon className="h-4 w-4" /> Colaborador cadastrado!
-          </p>
-        )}
-
-        <div className="flex justify-end">
-          <Submit />
+        <div className="flex flex-col gap-3 sm:col-span-2">
+          {state.error && <Aviso tom="erro">{state.error}</Aviso>}
+          {state.ok && <Aviso tom="ok">Colaborador cadastrado.</Aviso>}
+          <div className="flex justify-end">
+            <Enviar />
+          </div>
         </div>
       </form>
-    </div>
+    </Cartao>
   );
 }

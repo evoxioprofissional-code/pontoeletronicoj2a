@@ -2,10 +2,15 @@
 
 import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
-import { salvarCerca, geocodificar, type CercaState } from "@/app/admin/cerca/actions";
-import { PinIcon, AlertIcon, CheckIcon } from "@/components/icons";
+import {
+  salvarCerca,
+  geocodificar,
+  type CercaState,
+} from "@/app/admin/cerca/actions";
+import { Aviso, Campo, botao } from "@/components/ui";
+import { ExternalIcon, PinIcon } from "@/components/icons";
 
-interface CercaInit {
+export interface CercaInit {
   nome: string;
   endereco: string;
   latitude: number;
@@ -13,21 +18,14 @@ interface CercaInit {
   raio_metros: number;
 }
 
-function SubmitButton() {
+function Salvar() {
   const { pending } = useFormStatus();
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="rounded-xl bg-amber px-5 py-2.5 text-sm font-semibold text-graphite transition hover:bg-amber-soft disabled:opacity-60"
-    >
-      {pending ? "Salvando…" : "Salvar cerca"}
+    <button type="submit" disabled={pending} className={botao("primario")}>
+      {pending ? "Salvando…" : "Salvar local"}
     </button>
   );
 }
-
-const campo =
-  "w-full rounded-lg border border-steel-line bg-graphite px-3 py-2 text-ink placeholder:text-muted focus:border-amber focus:outline-none";
 
 export function CercaForm({ init }: { init: CercaInit | null }) {
   const [state, formAction] = useFormState<CercaState, FormData>(salvarCerca, {});
@@ -38,14 +36,17 @@ export function CercaForm({ init }: { init: CercaInit | null }) {
   const [raio, setRaio] = useState(String(init?.raio_metros ?? 150));
 
   const [geoMsg, setGeoMsg] = useState<string | null>(null);
-  const [aviso, setAviso] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<{ tom: "ok" | "aviso"; texto: string } | null>(
+    null,
+  );
   const [buscando, setBuscando] = useState(false);
   const [localizando, setLocalizando] = useState(false);
 
   function usarLocalizacao() {
     setGeoMsg(null);
+    setAviso(null);
     if (!navigator.geolocation) {
-      setGeoMsg("Geolocalização indisponível neste dispositivo.");
+      setGeoMsg("Este aparelho não informa a localização.");
       return;
     }
     setLocalizando(true);
@@ -53,13 +54,16 @@ export function CercaForm({ init }: { init: CercaInit | null }) {
       (pos) => {
         setLat(pos.coords.latitude.toFixed(6));
         setLng(pos.coords.longitude.toFixed(6));
-        setAviso(
-          `Localização capturada (precisão ±${Math.round(pos.coords.accuracy)} m). Confira no mapa e salve.`,
-        );
+        setAviso({
+          tom: "ok",
+          texto: `Localização capturada, com precisão de ±${Math.round(pos.coords.accuracy)} m. Confira no mapa e salve.`,
+        });
         setLocalizando(false);
       },
       () => {
-        setGeoMsg("Não foi possível obter sua localização.");
+        setGeoMsg(
+          "Não foi possível obter sua localização. Permita o acesso à localização no navegador e tente de novo.",
+        );
         setLocalizando(false);
       },
       { enableHighAccuracy: true, timeout: 15000 },
@@ -68,6 +72,7 @@ export function CercaForm({ init }: { init: CercaInit | null }) {
 
   async function buscarEndereco() {
     setGeoMsg(null);
+    setAviso(null);
     setBuscando(true);
     const r = await geocodificar(endereco);
     setBuscando(false);
@@ -78,130 +83,130 @@ export function CercaForm({ init }: { init: CercaInit | null }) {
     setLat(r.lat.toFixed(6));
     setLng(r.lng.toFixed(6));
     setEndereco(r.display);
-    setAviso(
-      "Atenção: a busca por endereço é APROXIMADA (pode errar centenas de metros). Confira em \"Ver no mapa\" ou, estando na fábrica, use \"Usar minha localização atual\".",
-    );
+    setAviso({
+      tom: "aviso",
+      texto:
+        "A busca por endereço é aproximada e pode errar por centenas de metros. Confira no mapa antes de salvar.",
+    });
   }
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
-      <label className="flex flex-col gap-1">
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted">
-          Nome do local
-        </span>
+    <form action={formAction} className="flex flex-col gap-6">
+      <Campo rotulo="Nome do local">
         <input
           name="nome"
           value={nome}
           onChange={(e) => setNome(e.target.value)}
-          className={campo}
+          className="campo"
         />
-      </label>
+      </Campo>
 
-      <label className="flex flex-col gap-1">
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted">
-          Endereço
-        </span>
-        <div className="flex gap-2">
-          <input
-            name="endereco"
-            value={endereco}
-            onChange={(e) => setEndereco(e.target.value)}
-            placeholder="Rua, número, cidade/UF"
-            className={campo}
-          />
+      {/* Onde fica */}
+      <fieldset className="flex flex-col gap-4">
+        <legend className="mb-3 text-[0.9375rem] font-semibold text-ink">
+          Onde fica
+        </legend>
+
+        <div className="rounded-lg border border-brand-line bg-brand-tint p-4">
+          <p className="text-sm text-ink-2">
+            <strong className="font-semibold text-ink">
+              Jeito mais preciso:
+            </strong>{" "}
+            abra esta tela no celular, de dentro da fábrica, e use o botão
+            abaixo.
+          </p>
           <button
             type="button"
-            onClick={buscarEndereco}
-            disabled={buscando}
-            className="shrink-0 rounded-lg bg-steel px-3 py-2 text-sm font-semibold text-amber ring-1 ring-amber/40 disabled:opacity-60"
+            onClick={usarLocalizacao}
+            disabled={localizando}
+            className={botao("primario", "md", "mt-3 w-full sm:w-auto")}
           >
-            {buscando ? "…" : "Buscar"}
+            <PinIcon className="h-[1.125rem] w-[1.125rem]" />
+            {localizando ? "Localizando…" : "Usar minha localização atual"}
           </button>
         </div>
-      </label>
 
-      <button
-        type="button"
-        onClick={usarLocalizacao}
-        disabled={localizando}
-        className="flex items-center justify-center gap-2 rounded-lg bg-steel px-3 py-2.5 text-sm font-semibold text-ink ring-1 ring-steel-line disabled:opacity-60"
+        <Campo rotulo="Ou busque pelo endereço">
+          <div className="flex gap-2">
+            <input
+              name="endereco"
+              value={endereco}
+              onChange={(e) => setEndereco(e.target.value)}
+              placeholder="Rua, número, cidade/UF"
+              className="campo"
+            />
+            <button
+              type="button"
+              onClick={buscarEndereco}
+              disabled={buscando}
+              className={botao("secundario", "md", "shrink-0")}
+            >
+              {buscando ? "Buscando…" : "Buscar"}
+            </button>
+          </div>
+        </Campo>
+
+        <div className="grid grid-cols-2 gap-3">
+          <Campo rotulo="Latitude">
+            <input
+              name="latitude"
+              value={lat}
+              onChange={(e) => setLat(e.target.value)}
+              inputMode="decimal"
+              className="campo num"
+            />
+          </Campo>
+          <Campo rotulo="Longitude">
+            <input
+              name="longitude"
+              value={lng}
+              onChange={(e) => setLng(e.target.value)}
+              inputMode="decimal"
+              className="campo num"
+            />
+          </Campo>
+        </div>
+
+        {lat && lng && (
+          <a
+            href={`https://www.google.com/maps?q=${lat},${lng}`}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 self-start text-sm font-medium text-brand underline underline-offset-4"
+          >
+            Conferir este ponto no mapa
+            <ExternalIcon className="h-4 w-4" />
+          </a>
+        )}
+
+        {aviso && <Aviso tom={aviso.tom}>{aviso.texto}</Aviso>}
+        {geoMsg && <Aviso tom="erro">{geoMsg}</Aviso>}
+      </fieldset>
+
+      <Campo
+        rotulo="Raio permitido"
+        dica="Distância máxima do ponto acima em que o funcionário consegue registrar. Para um galpão, 100 a 150 m costuma funcionar bem."
       >
-        <PinIcon className="h-4 w-4 text-amber" />
-        {localizando ? "Localizando…" : "Usar minha localização atual"}
-      </button>
-
-      <div className="grid grid-cols-2 gap-3">
-        <label className="flex flex-col gap-1">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted">
-            Latitude
-          </span>
+        <div className="flex items-center gap-2">
           <input
-            name="latitude"
-            value={lat}
-            onChange={(e) => setLat(e.target.value)}
-            inputMode="decimal"
-            className={`${campo} font-mono`}
+            name="raio_metros"
+            value={raio}
+            onChange={(e) => setRaio(e.target.value)}
+            type="number"
+            inputMode="numeric"
+            min={20}
+            className="campo num w-28"
           />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted">
-            Longitude
-          </span>
-          <input
-            name="longitude"
-            value={lng}
-            onChange={(e) => setLng(e.target.value)}
-            inputMode="decimal"
-            className={`${campo} font-mono`}
-          />
-        </label>
-      </div>
+          <span className="text-sm text-ink-3">metros</span>
+        </div>
+      </Campo>
 
-      <label className="flex flex-col gap-1">
-        <span className="text-xs font-semibold uppercase tracking-wider text-muted">
-          Raio permitido (metros)
-        </span>
-        <input
-          name="raio_metros"
-          value={raio}
-          onChange={(e) => setRaio(e.target.value)}
-          type="number"
-          min={20}
-          className={`${campo} font-mono`}
-        />
-      </label>
-
-      {lat && lng && (
-        <a
-          href={`https://www.google.com/maps?q=${lat},${lng}`}
-          target="_blank"
-          rel="noreferrer"
-          className="text-sm text-amber underline"
-        >
-          Ver no mapa
-        </a>
-      )}
-
-      {aviso && <p className="text-sm text-amber">{aviso}</p>}
-
-      {geoMsg && (
-        <p className="flex items-center gap-2 text-sm text-danger">
-          <AlertIcon className="h-4 w-4" /> {geoMsg}
-        </p>
-      )}
-      {state.error && (
-        <p className="flex items-center gap-2 text-sm text-danger">
-          <AlertIcon className="h-4 w-4" /> {state.error}
-        </p>
-      )}
-      {state.ok && (
-        <p className="flex items-center gap-2 text-sm text-signal">
-          <CheckIcon className="h-4 w-4" /> Cerca salva!
-        </p>
-      )}
-
-      <div className="flex justify-end">
-        <SubmitButton />
+      <div className="flex flex-col gap-3 border-t border-line pt-5">
+        {state.error && <Aviso tom="erro">{state.error}</Aviso>}
+        {state.ok && <Aviso tom="ok">Local salvo.</Aviso>}
+        <div className="flex justify-end">
+          <Salvar />
+        </div>
       </div>
     </form>
   );

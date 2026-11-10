@@ -1,112 +1,235 @@
-import type { ButtonHTMLAttributes, ReactNode } from "react";
-import type { Status } from "@/lib/types";
-import { PinIcon } from "./icons";
+import type { ReactNode } from "react";
+import type { Status } from "@/lib/ponto";
+import { AlertIcon, CheckIcon } from "./icons";
 
-/** Wrapper de conteúdo de tela com respiro lateral consistente. */
-export function ScreenShell({
+/* ---------- Botões ---------- */
+
+type Variante = "primario" | "secundario" | "perigo" | "texto";
+type Tamanho = "md" | "lg";
+
+const BOTAO_BASE =
+  "inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed select-none";
+
+const BOTAO_VARIANTE: Record<Variante, string> = {
+  primario:
+    "bg-brand text-white hover:bg-brand-strong active:bg-brand-strong disabled:bg-line disabled:text-ink-3",
+  secundario:
+    "border border-line-strong bg-surface text-ink hover:border-ink-3 active:bg-paper disabled:text-ink-3 disabled:hover:border-line-strong",
+  perigo:
+    "border border-danger-line bg-surface text-danger hover:bg-danger-tint active:bg-danger-tint",
+  texto: "text-brand hover:text-brand-strong underline-offset-4 hover:underline",
+};
+
+const BOTAO_TAMANHO: Record<Tamanho, string> = {
+  md: "min-h-[2.75rem] px-4 text-[0.9375rem]",
+  lg: "min-h-[3.5rem] px-5 text-[1.0625rem]",
+};
+
+/** Classes de botão — use em <button>, <a> ou <Link>. */
+export function botao(
+  variante: Variante = "primario",
+  tamanho: Tamanho = "md",
+  extra = "",
+): string {
+  return `${BOTAO_BASE} ${BOTAO_VARIANTE[variante]} ${BOTAO_TAMANHO[tamanho]} ${extra}`;
+}
+
+/* ---------- Estrutura ---------- */
+
+/** Cartão: superfície branca com borda fina. */
+export function Cartao({
+  children,
+  className = "",
+  as: Tag = "section",
+}: {
+  children: ReactNode;
+  className?: string;
+  as?: "section" | "div" | "li" | "article";
+}) {
+  return (
+    <Tag className={`rounded-xl border border-line bg-surface ${className}`}>
+      {children}
+    </Tag>
+  );
+}
+
+/** Título de seção dentro de uma página. */
+export function TituloSecao({
+  children,
+  acao,
+}: {
+  children: ReactNode;
+  acao?: ReactNode;
+}) {
+  return (
+    <div className="mb-3 flex items-baseline justify-between gap-3">
+      <h2 className="text-[0.9375rem] font-semibold text-ink">{children}</h2>
+      {acao}
+    </div>
+  );
+}
+
+/** Rótulo + campo, com o rótulo sempre visível. */
+export function Campo({
+  rotulo,
+  dica,
   children,
   className = "",
 }: {
+  rotulo: string;
+  dica?: string;
   children: ReactNode;
   className?: string;
 }) {
   return (
-    <div className={`flex min-h-full flex-col px-5 pb-8 ${className}`}>
+    <label className={`flex flex-col gap-1.5 ${className}`}>
+      <span className="text-sm font-medium text-ink-2">{rotulo}</span>
       {children}
+      {dica && <span className="text-xs text-ink-3">{dica}</span>}
+    </label>
+  );
+}
+
+/* ---------- Avisos ---------- */
+
+type Tom = "erro" | "ok" | "aviso" | "info";
+
+const AVISO_TOM: Record<Tom, string> = {
+  erro: "border-danger-line bg-danger-tint text-danger",
+  ok: "border-ok-line bg-ok-tint text-ok",
+  aviso: "border-warn-line bg-warn-tint text-warn",
+  info: "border-brand-line bg-brand-tint text-brand",
+};
+
+export function Aviso({
+  tom = "erro",
+  children,
+  className = "",
+}: {
+  tom?: Tom;
+  children: ReactNode;
+  className?: string;
+}) {
+  const Icone = tom === "ok" ? CheckIcon : AlertIcon;
+  return (
+    <div
+      role={tom === "erro" ? "alert" : "status"}
+      className={`flex items-start gap-2.5 rounded-lg border px-3.5 py-3 text-sm ${AVISO_TOM[tom]} ${className}`}
+    >
+      <Icone className="mt-0.5 h-[1.125rem] w-[1.125rem] shrink-0" />
+      <div className="min-w-0 flex-1 leading-relaxed">{children}</div>
     </div>
   );
 }
 
-/** Rótulo de seção em caixa alta, espaçado — tom de painel técnico. */
-export function SectionLabel({ children }: { children: ReactNode }) {
-  return (
-    <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted">
-      {children}
-    </p>
-  );
-}
+/* ---------- Etiquetas ---------- */
 
-const STATUS_META: Record<
-  Status,
-  { label: string; dot: string; text: string; ring: string }
-> = {
-  off: {
-    label: "Fora de turno",
-    dot: "bg-muted",
-    text: "text-muted",
-    ring: "ring-steel-line",
-  },
-  working: {
-    label: "Em turno",
-    dot: "bg-signal",
-    text: "text-signal",
-    ring: "ring-signal/30",
-  },
-  break: {
-    label: "Em intervalo",
-    dot: "bg-amber",
-    text: "text-amber",
-    ring: "ring-amber/30",
-  },
+const ETIQUETA_TOM: Record<Tom | "neutro", string> = {
+  erro: "bg-danger-tint text-danger",
+  ok: "bg-ok-tint text-ok",
+  aviso: "bg-warn-tint text-warn",
+  info: "bg-brand-tint text-brand",
+  neutro: "bg-paper text-ink-2 ring-1 ring-inset ring-line",
 };
 
-export function StatusBadge({ status }: { status: Status }) {
-  const m = STATUS_META[status];
+export function Etiqueta({
+  tom = "neutro",
+  children,
+}: {
+  tom?: Tom | "neutro";
+  children: ReactNode;
+}) {
   return (
     <span
-      className={`inline-flex items-center gap-2 rounded-full bg-steel px-3 py-1.5 text-sm font-semibold ring-1 ${m.ring} ${m.text}`}
+      className={`inline-flex items-center whitespace-nowrap rounded px-1.5 py-0.5 text-xs font-medium ${ETIQUETA_TOM[tom]}`}
     >
-      <span className={`h-2 w-2 rounded-full ${m.dot}`} />
-      {m.label}
+      {children}
     </span>
   );
 }
 
-/** Pílula do geofence — verde dentro da área, vermelho fora. */
-export function GeofencePill({ inside }: { inside: boolean }) {
+const STATUS_META: Record<Status, { rotulo: string; ponto: string; texto: string }> =
+  {
+    off: { rotulo: "Fora de turno", ponto: "bg-ink-3", texto: "text-ink-2" },
+    working: { rotulo: "Em turno", ponto: "bg-ok", texto: "text-ok" },
+    break: { rotulo: "Em intervalo", ponto: "bg-warn", texto: "text-warn" },
+  };
+
+/** Situação do funcionário agora: ponto colorido + texto. */
+export function StatusJornada({
+  status,
+  desde,
+}: {
+  status: Status;
+  desde?: string | null;
+}) {
+  const m = STATUS_META[status];
+  return (
+    <span className={`inline-flex items-center gap-2 text-sm font-medium ${m.texto}`}>
+      <span className={`h-2 w-2 rounded-full ${m.ponto}`} />
+      {m.rotulo}
+      {desde && status !== "off" && (
+        <span className="font-normal text-ink-3">desde {desde}</span>
+      )}
+    </span>
+  );
+}
+
+/** Barra de progresso fina (ex.: horas trabalhadas / meta). */
+export function Progresso({
+  valor,
+  total,
+  rotulo,
+}: {
+  valor: number;
+  total: number;
+  rotulo: string;
+}) {
+  const pct = total > 0 ? Math.min(100, Math.round((valor / total) * 100)) : 0;
   return (
     <div
-      className={`flex items-center gap-2.5 rounded-xl border px-3.5 py-3 text-sm font-medium ${
-        inside
-          ? "border-signal/25 bg-signal/10 text-signal"
-          : "border-danger/30 bg-danger/10 text-danger"
-      }`}
-      role="status"
+      role="progressbar"
+      aria-label={rotulo}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={pct}
+      className="h-1.5 w-full overflow-hidden rounded-full bg-line"
     >
-      <PinIcon className="h-5 w-5 shrink-0" />
-      <span>
-        {inside
-          ? "Você está dentro da área da fábrica"
-          : "Fora da área permitida"}
-      </span>
+      <div
+        className={`h-full rounded-full ${pct >= 100 ? "bg-ok" : "bg-brand"}`}
+        style={{ width: `${pct}%` }}
+      />
     </div>
   );
 }
 
-type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "amber" | "ghost" | "danger";
-};
+/** Iniciais do nome para o avatar. */
+export function iniciaisDe(nome: string): string {
+  const p = nome.trim().split(/\s+/).filter(Boolean);
+  if (p.length === 0) return "?";
+  if (p.length === 1) return p[0].slice(0, 2).toUpperCase();
+  return (p[0][0] + p[p.length - 1][0]).toUpperCase();
+}
 
-export function Button({
-  variant = "amber",
-  className = "",
-  children,
-  ...rest
-}: ButtonProps) {
-  const styles: Record<string, string> = {
-    amber:
-      "bg-amber text-graphite hover:bg-amber-soft active:scale-[0.99] shadow-amber-glow disabled:bg-steel disabled:text-muted disabled:shadow-none disabled:cursor-not-allowed",
-    ghost:
-      "bg-steel text-ink ring-1 ring-steel-line hover:bg-steel-line active:scale-[0.99]",
-    danger:
-      "bg-transparent text-danger ring-1 ring-danger/40 hover:bg-danger/10 active:scale-[0.99]",
-  };
+export function Avatar({
+  nome,
+  tamanho = "md",
+}: {
+  nome: string;
+  tamanho?: "sm" | "md" | "lg";
+}) {
+  const t =
+    tamanho === "lg"
+      ? "h-14 w-14 text-lg"
+      : tamanho === "sm"
+        ? "h-8 w-8 text-xs"
+        : "h-10 w-10 text-sm";
   return (
-    <button
-      className={`inline-flex w-full items-center justify-center gap-2 rounded-2xl px-5 py-4 text-base font-semibold transition ${styles[variant]} ${className}`}
-      {...rest}
+    <span
+      aria-hidden
+      className={`inline-flex shrink-0 items-center justify-center rounded-lg bg-brand-tint font-semibold text-brand ${t}`}
     >
-      {children}
-    </button>
+      {iniciaisDe(nome)}
+    </span>
   );
 }
