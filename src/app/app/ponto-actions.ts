@@ -111,7 +111,7 @@ export async function baterPonto(p: PunchPayload): Promise<PunchResult> {
   const { data: func, error: errCtx } = await supabase
     .from("funcionarios")
     .select(
-      `id, empresa_id,
+      `id, empresa_id, ativo,
        biometria_facial(template),
        empresa:empresas!empresa_id(cercas(id, nome, latitude, longitude, raio_metros)),
        hoje:registros_ponto!funcionario_id(tipo, marcado_em)`,
@@ -124,6 +124,9 @@ export async function baterPonto(p: PunchPayload): Promise<PunchResult> {
     .maybeSingle();
   if (errCtx) return { error: `Falha ao consultar: ${errCtx.message}` };
   if (!func) return { error: "Funcionário não encontrado." };
+  if (!func.ativo) {
+    return { error: "Seu cadastro está desligado. Fale com o RH." };
+  }
 
   // 0) Anti-duplicidade — bloqueia marcações em sequência (toque duplo/reenvio)
   const hoje = (func.hoje ?? []) as { tipo: TipoDB; marcado_em: string }[];

@@ -24,6 +24,8 @@ export interface EspelhoViewProps {
   voltar: { href: string; rotulo: string };
   /** RH: caminho da tela de ajuste da pessoa, para corrigir um dia. */
   corrigirBase?: string;
+  /** Funcionário: mostra "Pedir ajuste" nos dias com problema. */
+  pedirAjuste?: boolean;
 }
 
 const SEMANA = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
@@ -34,6 +36,9 @@ const SITUACAO: Record<SituacaoDia, { texto: string; cor: string }> = {
   andamento: { texto: "Em andamento", cor: "text-brand" },
   sem_registro: { texto: "Sem registro", cor: "text-ink-3" },
   folga: { texto: "", cor: "" },
+  feriado: { texto: "Feriado", cor: "text-brand" },
+  ferias: { texto: "Férias", cor: "text-brand" },
+  abonado: { texto: "Abonado", cor: "text-ok" },
   futuro: { texto: "", cor: "" },
   antes: { texto: "", cor: "" },
 };
@@ -92,6 +97,7 @@ export function EspelhoView({
   base,
   voltar,
   corrigirBase,
+  pedirAjuste = false,
 }: EspelhoViewProps) {
   const temAjuste = banco.dias.some((d) =>
     d.marcacoes.some((m) => m.ajustado && m.metodo_verificacao !== "manual"),
@@ -186,8 +192,16 @@ export function EspelhoView({
                 d.situacao === "folga" ||
                 d.situacao === "futuro" ||
                 d.situacao === "antes";
+              const problema =
+                d.situacao === "incompleto" || d.situacao === "sem_registro";
               const podeCorrigir =
-                corrigirBase && d.dia <= hoje && d.situacao !== "antes";
+                (corrigirBase || pedirAjuste) &&
+                problema &&
+                d.dia <= hoje &&
+                d.situacao !== "antes";
+              const linkCorrigir = corrigirBase
+                ? `${corrigirBase}?d=${-diasAtras(d.dia, hoje)}`
+                : `/app/solicitacoes?dia=${d.dia}&categoria=${d.situacao === "sem_registro" ? "abonar" : "incluir"}`;
               return (
                 <tr
                   key={d.dia}
@@ -206,17 +220,19 @@ export function EspelhoView({
                     <Marcacoes dia={d} />
                     {(s.texto || podeCorrigir) && (
                       <span className="mt-0.5 flex flex-wrap items-center gap-x-3 text-xs">
-                        {s.texto && <span className={s.cor}>{s.texto}</span>}
-                        {podeCorrigir &&
-                          (d.situacao === "incompleto" ||
-                            d.situacao === "sem_registro") && (
-                            <Link
-                              href={`${corrigirBase}?d=${-diasAtras(d.dia, hoje)}`}
-                              className="font-medium text-brand underline underline-offset-2 print:hidden"
-                            >
-                              Corrigir
-                            </Link>
-                          )}
+                        {s.texto && (
+                          <span className={s.cor}>
+                            {d.feriado ? `Feriado: ${d.feriado}` : s.texto}
+                          </span>
+                        )}
+                        {podeCorrigir && (
+                          <Link
+                            href={linkCorrigir}
+                            className="font-medium text-brand underline underline-offset-2 print:hidden"
+                          >
+                            {corrigirBase ? "Corrigir" : "Pedir ajuste"}
+                          </Link>
+                        )}
                       </span>
                     )}
                   </td>

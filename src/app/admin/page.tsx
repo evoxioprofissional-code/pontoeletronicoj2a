@@ -18,14 +18,18 @@ export default async function DashboardAdmin({
   const mesAtual = hoje.slice(0, 7);
   const mes = mesValido(searchParams.mes) ?? mesAtual;
 
-  const { pessoas, registros } = await carregarBase(ctx.supabase, ctx.empresaId, mes);
+  const { pessoas, registros, regras } = await carregarBase(
+    ctx.supabase,
+    ctx.empresaId,
+    mes,
+  );
 
   return (
     <DashboardView
       empresa={ctx.empresa.nome}
       mesAtual={mesAtual}
       hoje={hoje}
-      d={montarPainel(pessoas, registros, mes, agora)}
+      d={montarPainel(pessoas, registros, mes, agora, regras)}
     />
   );
 }

@@ -5,16 +5,21 @@
 //     diária. Sábado e domingo não têm jornada prevista: o que for trabalhado
 //     entra inteiro como saldo positivo.
 //  2. Dia útil SEM nenhum registro não desconta nada — aparece como
-//     "sem registro" para o RH decidir (o sistema ainda não conhece feriados,
-//     férias e atestados).
+//     "sem registro" para o RH decidir.
+//  5. Com turno cadastrado, o previsto de cada dia vem da escala do turno
+//     (folga = 0). Sem turno, vale a regra 1 com a jornada diária.
+//  6. Feriado e férias: previsto 0 (o que for trabalhado vira saldo positivo).
+//     Dia abonado (atestado aprovado): o que faltou não desconta.
 //  3. Dia em que faltou registrar a saída conta só os períodos fechados e fica
 //     marcado como incompleto, para o RH corrigir.
 //  4. O dia de hoje só entra no saldo depois da saída registrada.
 import {
   minutosTrabalhados,
   dataLocal,
+  horaLocal,
   type MarcacaoLite,
 } from "./ponto";
+import { emFerias, jornadaDoDia, paraMinutos, type RegrasPessoa } from "./turnos";
 
 /** 0 = domingo … 6 = sábado. */
 export const DIAS_UTEIS: readonly number[] = [1, 2, 3, 4, 5];
@@ -24,9 +29,12 @@ export type SituacaoDia =
   | "incompleto" // tem registros, mas faltou a saída
   | "andamento" // é hoje e a pessoa ainda não saiu
   | "sem_registro" // dia útil sem nenhum registro
-  | "folga" // sábado/domingo sem registro
+  | "folga" // dia sem jornada prevista, sem registro
+  | "feriado" // feriado da empresa
+  | "ferias" // pessoa de férias
+  | "abonado" // abono aprovado (atestado etc.)
   | "futuro" // ainda não chegou
-  | "antes"; // anterior ao primeiro registro da pessoa no sistema
+  | "antes"; // fora do período da pessoa (antes do 1º registro/admissão, após desligamento)
 
 export interface DiaBanco<M extends MarcacaoLite = MarcacaoLite> {
   /** "AAAA-MM-DD" */
@@ -41,6 +49,10 @@ export interface DiaBanco<M extends MarcacaoLite = MarcacaoLite> {
   situacao: SituacaoDia;
   /** false = não entra no saldo (sem registro, folga, hoje em andamento…). */
   conta: boolean;
+  /** Minutos de atraso na entrada (além da tolerância do turno), se houver turno. */
+  atrasoMin: number;
+  /** Nome do feriado, quando for feriado. */
+  feriado?: string;
 }
 
 /** Dia da semana de "AAAA-MM-DD" (independe do fuso do servidor). */
@@ -114,6 +126,7 @@ export interface ContextoCalculo {
   agora: Date;
   /** Dia do primeiro registro da pessoa (null = nunca registrou). */
   primeiroDia: string | null;
+  regras?: RegrasPessoa;
 }
 
 /** Calcula um dia do banco de horas. */
@@ -123,7 +136,24 @@ export function calcularDia<M extends MarcacaoLite>(
   ctx: ContextoCalculo,
 ): DiaBanco<M> {
   const semana = diaDaSemana(dia);
-  const util = DIAS_UTEIS.includes(semana);
+  const r = ctx.regras;
+
+  // Jornada prevista "normal" do dia (antes de feriado/férias/abono).
+  const escala = r?.escalaEm(dia) ?? null;
+  const turnoDoDia = escala ? escala[semana] : null;
+  const jornada = escala
+    ? jornadaDoDia(turnoDoDia)
+    : DIAS_UTEIS.includes(semana)
+      ? ctx.cargaMin
+      : 0;
+  const feriado = r?.feriados.get(dia);
+  const ferias = r ? emFerias(dia, r.ferias) : false;
+  const abonado = r?.abonos.has(dia) ?? false;
+  const util = jornada > 0 && !feriado && !ferias;
+  const foraDoContrato = Boolean(
+    (r?.admissao && dia < r.admissao) || (r?.desligamento && dia > r.desligamento),
+  );
+
   const base = {
     dia,
     semana,
@@ -133,33 +163,47 @@ export function calcularDia<M extends MarcacaoLite>(
     previstoMin: 0,
     saldoMin: 0,
     conta: false,
+    atrasoMin: 0,
+    ...(feriado ? { feriado } : {}),
   };
 
   if (marcacoes.length === 0) {
-    const situacao: SituacaoDia =
-      dia > ctx.hoje
-        ? "futuro"
-        : !ctx.primeiroDia || dia < ctx.primeiroDia
-          ? "antes"
-          : util
-            ? "sem_registro"
-            : "folga";
+    const inicio = r?.admissao ?? ctx.primeiroDia;
+    let situacao: SituacaoDia;
+    if (dia > ctx.hoje) situacao = feriado ? "feriado" : ferias ? "ferias" : "futuro";
+    else if (foraDoContrato || !inicio || dia < inicio) situacao = "antes";
+    else if (feriado) situacao = "feriado";
+    else if (ferias) situacao = "ferias";
+    else if (abonado) situacao = "abonado";
+    else situacao = util ? "sem_registro" : "folga";
     return { ...base, situacao };
   }
 
   const trabalhadoMin = minutosTrabalhados(marcacoes, ctx.agora);
-  const previstoMin = util ? ctx.cargaMin : 0;
+  const previstoMin = util ? jornada : 0;
   const saiu = marcacoes[marcacoes.length - 1].tipo === "saida";
 
-  if (dia === ctx.hoje && !saiu) {
-    return { ...base, trabalhadoMin, previstoMin, situacao: "andamento" };
+  // Atraso: só com turno definido para o dia.
+  let atrasoMin = 0;
+  const entrada = marcacoes.find((m) => m.tipo === "entrada");
+  if (util && turnoDoDia && entrada) {
+    const chegou = paraMinutos(horaLocal(entrada.marcado_em));
+    const atraso = chegou - paraMinutos(turnoDoDia.entrada);
+    if (atraso > (r?.toleranciaMin ?? 10)) atrasoMin = atraso;
   }
+
+  if (dia === ctx.hoje && !saiu) {
+    return { ...base, trabalhadoMin, previstoMin, atrasoMin, situacao: "andamento" };
+  }
+  const saldoBruto = trabalhadoMin - previstoMin;
   return {
     ...base,
     trabalhadoMin,
     previstoMin,
-    saldoMin: trabalhadoMin - previstoMin,
-    situacao: saiu ? "completo" : "incompleto",
+    atrasoMin,
+    // Abono: o que faltou não desconta; o que passou continua contando.
+    saldoMin: abonado ? Math.max(0, saldoBruto) : saldoBruto,
+    situacao: abonado ? "abonado" : saiu ? "completo" : "incompleto",
     conta: true,
   };
 }
@@ -173,6 +217,7 @@ export interface MesBanco<M extends MarcacaoLite = MarcacaoLite> {
   diasTrabalhados: number;
   incompletos: number;
   semRegistro: number;
+  atrasos: number;
   /** Saldo acumulado de todos os meses anteriores. */
   anteriorMin: number;
   /** Saldo anterior + saldo do mês. */
@@ -191,6 +236,7 @@ export function calcularMes<M extends MarcacaoLite>(
   todas: M[],
   cargaMin: number,
   agora: Date = new Date(),
+  regras?: RegrasPessoa,
 ): MesBanco<M> {
   const porDia = agruparPorDia(todas);
   const chaves = [...porDia.keys()].sort();
@@ -199,6 +245,7 @@ export function calcularMes<M extends MarcacaoLite>(
     hoje: dataLocal(agora),
     agora,
     primeiroDia: chaves[0] ?? null,
+    regras,
   };
 
   const inicioMes = `${mes}-01`;
@@ -224,6 +271,7 @@ export function calcularMes<M extends MarcacaoLite>(
     diasTrabalhados: dias.filter((d) => d.marcacoes.length > 0).length,
     incompletos: dias.filter((d) => d.situacao === "incompleto").length,
     semRegistro: dias.filter((d) => d.situacao === "sem_registro").length,
+    atrasos: dias.filter((d) => d.atrasoMin > 0).length,
     anteriorMin,
     acumuladoMin: anteriorMin + saldoMin,
     semSaidaAnteriores,

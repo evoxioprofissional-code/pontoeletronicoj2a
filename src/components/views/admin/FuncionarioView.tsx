@@ -42,6 +42,8 @@ export interface FuncionarioViewProps {
   dia: string;
   rotuloDia: string;
   marcacoes: MarcacaoAdmin[];
+  /** Formulário de cadastro completo (montado na página). */
+  cadastro?: React.ReactNode;
 }
 
 const navDia =
@@ -55,6 +57,7 @@ export function FuncionarioView({
   dia,
   rotuloDia,
   marcacoes,
+  cadastro,
 }: FuncionarioViewProps) {
   const base = `/admin/funcionario/${func.id}`;
 
@@ -296,6 +299,14 @@ export function FuncionarioView({
           </Cartao>
         </section>
       </div>
+      {cadastro && (
+        <section id="cadastro" className="mt-8">
+          <TituloSecao>Dados do cadastro</TituloSecao>
+          <Cartao as="div" className="p-5 sm:p-6">
+            {cadastro}
+          </Cartao>
+        </section>
+      )}
     </>
   );
 }

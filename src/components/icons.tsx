@@ -252,6 +252,35 @@ export function ExternalIcon(props: IconProps) {
   );
 }
 
+export function InboxIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M4 13l2.500-7h11L20 13" />
+      <path d="M4 13v5a1 1 0 001 1h14a1 1 0 001-1v-5h-4.500l-1.500 2h-4l-1.500-2H4z" />
+    </svg>
+  );
+}
+
+export function CalendarIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <rect x="4" y="5.500" width="16" height="14" rx="1.500" />
+      <path d="M4 10h16" />
+      <path d="M8.500 3.500v4" />
+      <path d="M15.500 3.500v4" />
+    </svg>
+  );
+}
+
+export function SunIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <circle cx="12" cy="12" r="3.500" />
+      <path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.600 5.600l1.400 1.400M17 17l1.400 1.400M5.600 18.400L7 17M17 7l1.400-1.400" />
+    </svg>
+  );
+}
+
 const TIPO_ICON: Record<TipoDB, (p: IconProps) => JSX.Element> = {
   entrada: EnterIcon,
   inicio_intervalo: PauseIcon,

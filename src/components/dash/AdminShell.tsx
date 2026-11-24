@@ -6,16 +6,20 @@ import type { ReactNode } from "react";
 import { Marca } from "@/components/Logo";
 import {
   ArrowLeft,
+  CalendarIcon,
   ChartIcon,
   ClockIcon,
+  InboxIcon,
   ListIcon,
   PinIcon,
+  SunIcon,
   UsersIcon,
 } from "@/components/icons";
 
 // Só entra no menu o que já funciona. Módulos futuros voltam quando existirem.
 const ITENS = [
   { href: "/admin", rotulo: "Visão geral", Icone: ChartIcon, raiz: true },
+  { href: "/admin/solicitacoes", rotulo: "Solicitações", Icone: InboxIcon },
   {
     href: "/admin/colaboradores",
     rotulo: "Colaboradores",
@@ -28,6 +32,8 @@ const ITENS = [
     Icone: ClockIcon,
     tambem: "/admin/espelho",
   },
+  { href: "/admin/jornada", rotulo: "Turnos e feriados", Icone: CalendarIcon },
+  { href: "/admin/ferias", rotulo: "Férias", Icone: SunIcon },
   { href: "/admin/relatorios", rotulo: "Relatórios", Icone: ListIcon },
   { href: "/admin/cerca", rotulo: "Local da fábrica", Icone: PinIcon },
 ] as const;

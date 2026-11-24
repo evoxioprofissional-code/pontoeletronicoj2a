@@ -53,9 +53,14 @@ export function RegistrosView({ nome, gestor, dias, hoje }: RegistrosViewProps) 
             Meus registros
           </h1>
         </div>
-        <Link href="/app/espelho" className={botao("secundario", "md", "w-full sm:w-auto")}>
-          Espelho e banco de horas
-        </Link>
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+          <Link href="/app/solicitacoes" className={botao("secundario", "md", "w-full sm:w-auto")}>
+            Pedir ajuste
+          </Link>
+          <Link href="/app/espelho" className={botao("secundario", "md", "w-full sm:w-auto")}>
+            Espelho e banco de horas
+          </Link>
+        </div>
       </header>
 
       <Cartao className="mb-4 grid grid-cols-2 divide-x divide-line">

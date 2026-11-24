@@ -45,6 +45,7 @@ export default async function MeuEspelho({
         hoje={hoje}
         base="/app/espelho"
         voltar={{ href: "/app/registros", rotulo: "Meus registros" }}
+        pedirAjuste
       />
     </AppShell>
   );

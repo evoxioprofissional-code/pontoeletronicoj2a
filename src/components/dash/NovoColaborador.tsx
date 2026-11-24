@@ -18,7 +18,15 @@ function Enviar() {
   );
 }
 
-export function NovoColaborador({ aberto: abertoInicial = false }: { aberto?: boolean }) {
+export function NovoColaborador({
+  aberto: abertoInicial = false,
+  equipes = [],
+  turnos = [],
+}: {
+  aberto?: boolean;
+  equipes?: { id: string; nome: string }[];
+  turnos?: { id: string; nome: string }[];
+}) {
   const [aberto, setAberto] = useState(abertoInicial);
   const [state, formAction] = useFormState<NovoState, FormData>(
     criarFuncionario,
@@ -27,7 +35,7 @@ export function NovoColaborador({ aberto: abertoInicial = false }: { aberto?: bo
 
   if (!aberto) {
     return (
-      <div className="mb-4">
+      <div>
         <button
           type="button"
           onClick={() => setAberto(true)}
@@ -41,7 +49,7 @@ export function NovoColaborador({ aberto: abertoInicial = false }: { aberto?: bo
   }
 
   return (
-    <Cartao className="mb-5 p-5 sm:p-6">
+    <Cartao className="mb-1 w-full p-5 sm:p-6">
       <div className="mb-5 flex items-start justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold text-ink">Novo colaborador</h2>
@@ -95,6 +103,30 @@ export function NovoColaborador({ aberto: abertoInicial = false }: { aberto?: bo
             className="campo"
           />
         </Campo>
+
+        <Campo rotulo="CPF (opcional)">
+          <input name="cpf" inputMode="numeric" maxLength={14} autoComplete="off" className="campo num" />
+        </Campo>
+        <Campo rotulo="Data de admissão (opcional)">
+          <input name="data_admissao" type="date" className="campo num" />
+        </Campo>
+
+        {equipes.length > 0 && (
+          <Campo rotulo="Equipe">
+            <select name="equipe_id" defaultValue="" className="campo">
+              <option value="">Sem equipe</option>
+              {equipes.map((e) => <option key={e.id} value={e.id}>{e.nome}</option>)}
+            </select>
+          </Campo>
+        )}
+        {turnos.length > 0 && (
+          <Campo rotulo="Turno">
+            <select name="turno_id" defaultValue="" className="campo">
+              <option value="">Sem turno</option>
+              {turnos.map((t) => <option key={t.id} value={t.id}>{t.nome}</option>)}
+            </select>
+          </Campo>
+        )}
 
         <Campo rotulo="Acesso">
           <select name="papel" defaultValue="funcionario" className="campo">

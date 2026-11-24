@@ -12,6 +12,7 @@ import {
   type MarcacaoLite,
   type TipoDB,
 } from "./ponto";
+import type { RegrasPessoa } from "./turnos";
 
 export interface PessoaPainel {
   id: string;
@@ -114,6 +115,7 @@ export function montarPainel(
   registros: Map<string, MarcacaoPainel[]>,
   mes: string,
   agora: Date = new Date(),
+  regras?: Map<string, RegrasPessoa> | null,
 ): PainelDados {
   const hoje = dataLocal(agora);
   const ehMesAtual = hoje.startsWith(mes);
@@ -123,8 +125,8 @@ export function montarPainel(
     const todas = registros.get(p.id) ?? [];
     return {
       p,
-      banco: calcularMes(mes, todas, p.cargaMin, agora) as MesBanco<MarcacaoPainel>,
-      anterior: calcularMes(somarMes(mes, -1), todas, p.cargaMin, agora),
+      banco: calcularMes(mes, todas, p.cargaMin, agora, regras?.get(p.id)) as MesBanco<MarcacaoPainel>,
+      anterior: calcularMes(somarMes(mes, -1), todas, p.cargaMin, agora, regras?.get(p.id)),
     };
   });
 

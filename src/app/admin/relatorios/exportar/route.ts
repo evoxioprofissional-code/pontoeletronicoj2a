@@ -36,6 +36,9 @@ const SITUACAO: Record<SituacaoDia, string> = {
   andamento: "Em andamento",
   sem_registro: "Sem registro",
   folga: "",
+  feriado: "Feriado",
+  ferias: "Férias",
+  abonado: "Abonado",
   futuro: "",
   antes: "",
 };
