@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config";
+import { JWKS_PUBLICO } from "./jwks";
 
 /**
  * Renova a sessão do Supabase a cada requisição e protege as rotas do app.
@@ -30,7 +31,7 @@ export async function updateSession(request: NextRequest) {
   // IMPORTANTE: não colocar lógica entre createServerClient e getClaims().
   // getClaims() valida o JWT localmente (ES256) e só vai à rede quando
   // precisa renovar a sessão — getUser() fazia uma requisição em TODA página.
-  const { data } = await supabase.auth.getClaims();
+  const { data } = await supabase.auth.getClaims(undefined, { jwks: JWKS_PUBLICO });
   const user = data?.claims?.sub ? { id: data.claims.sub } : null;
 
   const path = request.nextUrl.pathname;

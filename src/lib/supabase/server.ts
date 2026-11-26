@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config";
+import { JWKS_PUBLICO } from "./jwks";
 
 /**
  * Cliente Supabase para Server Components, Route Handlers e Server Actions.
@@ -38,7 +39,7 @@ export function createClient() {
 export async function usuarioAtual(
   supabase: ReturnType<typeof createClient>,
 ): Promise<{ id: string } | null> {
-  const { data, error } = await supabase.auth.getClaims();
+  const { data, error } = await supabase.auth.getClaims(undefined, { jwks: JWKS_PUBLICO });
   const sub = data?.claims?.sub;
   if (error || !sub) return null;
   return { id: sub };
