@@ -28,7 +28,7 @@ interface Props {
 type Fase = "carregando" | "pronto" | "erro";
 
 /** Tempo máximo para concluir a prova de vida antes de pedir nova tentativa. */
-const TEMPO_MAX_PROVA_MS = 25000;
+const TEMPO_MAX_PROVA_MS = 45000;
 
 const PASSO: Record<EtapaVida, number> = { frente: 1, virar: 2, voltar: 3, ok: 3 };
 
@@ -76,6 +76,11 @@ export function CameraCapture({
   const [etapa, setEtapa] = useState<EtapaVida>("frente");
   const [provaFalhou, setProvaFalhou] = useState(false);
   const [tentativa, setTentativa] = useState(0);
+  // Há rosto no quadro agora? (moldura verde + dica quando some)
+  const [vendoRosto, setVendoRosto] = useState(false);
+  // Proporção real da imagem da câmera (largura/altura). A área do vídeo
+  // assume essa proporção para mostrar a imagem inteira, sem recorte.
+  const [proporcao, setProporcao] = useState(3 / 4);
   const onDescritorRef = useRef(onDescritor);
   onDescritorRef.current = onDescritor;
 
@@ -84,18 +89,45 @@ export function CameraCapture({
     async function iniciar() {
       try {
         await carregarModelos();
+        // Antes pedíamos 480×640 "em pé": em muitos celulares a câmera corta o
+        // sensor para entregar isso, o que vira um zoom enorme no rosto.
+        // Agora pedimos o formato natural da câmera e a tela se adapta.
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "user", width: 480, height: 640 },
+          video: {
+            facingMode: "user",
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
           audio: false,
         });
+        // Se a câmera aceitar controle de zoom, deixa no mínimo (mais aberto).
+        try {
+          const trilha = stream.getVideoTracks()[0];
+          const caps = trilha.getCapabilities?.() as
+            | (MediaTrackCapabilities & { zoom?: { min: number } })
+            | undefined;
+          if (caps?.zoom) {
+            await trilha.applyConstraints({
+              advanced: [{ zoom: caps.zoom.min } as MediaTrackConstraintSet],
+            });
+          }
+        } catch {
+          // nem todo aparelho permite — segue com o padrão
+        }
         if (cancelado) {
           stream.getTracks().forEach((t) => t.stop());
           return;
         }
         streamRef.current = stream;
         if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          await videoRef.current.play();
+          const v = videoRef.current;
+          v.srcObject = stream;
+          await v.play();
+          if (v.videoWidth && v.videoHeight) setProporcao(v.videoWidth / v.videoHeight);
+          // Ao girar o celular a imagem muda de formato.
+          v.onresize = () => {
+            if (v.videoWidth && v.videoHeight) setProporcao(v.videoWidth / v.videoHeight);
+          };
         }
         setFase("pronto");
       } catch (e) {
@@ -133,9 +165,14 @@ export function CameraCapture({
           if (!ativo) return;
           estado = avancarProva(estado, leitura);
           setEtapa(estado.etapa);
+          setVendoRosto(Boolean(leitura));
           if (estado.reiniciou) {
             setMsg("Perdemos seu rosto de vista. Vamos recomeçar.");
-          } else if (estado.etapa !== "frente") {
+          } else if (!leitura && estado.perdidos >= 2) {
+            setMsg(
+              "Não estou vendo seu rosto. Aproxime o celular, tire boné ou óculos escuros e fique de frente para a luz.",
+            );
+          } else if (leitura) {
             setMsg(null);
           }
 
@@ -222,7 +259,16 @@ export function CameraCapture({
 
       {/* Câmera */}
       <div className="app-gutter mx-auto flex min-h-48 w-full max-w-md flex-1 flex-col pt-4">
-        <div className="relative min-h-0 flex-1 overflow-hidden rounded-[1.75rem] bg-black shadow-float">
+        {/* A área ocupa o espaço livre; o vídeo fica no tamanho máximo que cabe
+            mantendo a proporção da câmera (sem cortar a imagem = sem zoom). */}
+        <div className="flex min-h-0 flex-1 items-center justify-center [container-type:size]">
+        <div
+          className="relative overflow-hidden rounded-[1.75rem] bg-black shadow-float"
+          style={{
+            aspectRatio: String(proporcao),
+            width: `min(100cqw, calc(100cqh * ${proporcao.toFixed(4)}))`,
+          }}
+        >
           <video
             ref={videoRef}
             playsInline
@@ -234,10 +280,12 @@ export function CameraCapture({
           {fase !== "erro" && (
             <div className="pointer-events-none absolute inset-x-[12%] bottom-[12%] top-[8%]">
               <div
-                className={`h-full w-full rounded-[50%] border-2 ${
+                className={`h-full w-full rounded-[50%] border-[3px] transition-colors duration-200 ${
                   etapa === "ok" || (processando && fase === "pronto")
                     ? "border-ok"
-                    : "border-white/80"
+                    : provaDeVida && fase === "pronto" && vendoRosto
+                      ? "border-[#2BB3C0]"
+                      : "border-white/70"
                 }`}
               />
             </div>
@@ -266,6 +314,7 @@ export function CameraCapture({
               {ocupado ? "Registrando…" : "Lendo seu rosto…"}
             </p>
           )}
+        </div>
         </div>
       </div>
 

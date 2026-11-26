@@ -34,14 +34,17 @@ export interface EstadoVida {
   reiniciou: boolean;
 }
 
+// Medido em fotos de teste (nariz × centro dos olhos): rostos de frente
+// ficaram entre 0,02 e 0,10; rostos virados, a partir de ~0,19. O limite
+// antigo de 0,07 reprovava gente olhando de frente.
 /** |desvio| abaixo disto = olhando de frente. */
-export const DESVIO_FRENTE = 0.07;
+export const DESVIO_FRENTE = 0.12;
 /** |desvio| acima disto = cabeça virada (~20°). */
-export const DESVIO_VIRADO = 0.15;
+export const DESVIO_VIRADO = 0.2;
 /** Quadros seguidos exigidos para confirmar "de frente". */
 export const QUADROS_ESTAVEIS = 2;
 /** Quadros sem rosto tolerados antes de reiniciar o desafio. */
-export const QUADROS_PERDIDOS_MAX = 3;
+export const QUADROS_PERDIDOS_MAX = 5;
 /** Salto máximo do centro do rosto entre quadros (em larguras de rosto). */
 export const SALTO_MAX = 0.6;
 
