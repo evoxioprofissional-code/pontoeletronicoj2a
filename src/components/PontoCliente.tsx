@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { CameraCapture } from "./CameraCapture";
 import { PinIcon, ScanFaceIcon, CheckIcon, TipoIcon } from "./icons";
 import { Aviso, botao } from "./ui";
+import { TelaCheia } from "./TelaCheia";
 import { melhorCerca, TOLERANCIA_GPS_MAX_M } from "@/lib/geo";
 import {
   acaoTipo,
@@ -224,7 +225,9 @@ export function PontoCliente({ cercas, temFace, proximoTipo, geoDemo }: Props) {
               : geo.fase === "carregando"
                 ? "O botão libera assim que acharmos sua localização."
                 : geo.fase === "ok"
-                  ? "O botão libera quando você estiver dentro da área da fábrica."
+                  ? (geo.precisao ?? 0) > TOLERANCIA_GPS_MAX_M
+                    ? "O botão libera assim que o GPS ficar preciso."
+                    : "O botão libera quando você estiver dentro da área da fábrica."
                   : "O botão libera quando a localização estiver funcionando."}
           </p>
         </>
@@ -308,29 +311,46 @@ function Localizacao({
   if (geo.fase === "ok") {
     const dist = Math.round(geo.distancia ?? 0);
     const precisao = Math.round(geo.precisao ?? 0);
-    const sinalFraco = !geo.dentro && precisao > TOLERANCIA_GPS_MAX_M;
+    // GPS impreciso: não afirmamos "fora da área" — o iPhone costuma mandar
+    // primeiro uma posição aproximada (ou sempre, com a Localização Precisa
+    // desligada) e só depois a exata.
+    const impreciso = !geo.dentro && precisao > TOLERANCIA_GPS_MAX_M;
+    const aproximada = !geo.dentro && precisao > 500;
+    const tom = geo.dentro
+      ? "bg-[#123020] text-[#7DDBA3]"
+      : impreciso
+        ? "bg-white/10 text-white"
+        : "bg-[#3A1C1C] text-[#FF9C93]";
     return (
       <div role="status" className={`${CHIP} items-start`}>
         <span
           aria-hidden
-          className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
-            geo.dentro ? "bg-[#123020] text-[#7DDBA3]" : "bg-[#3A1C1C] text-[#FF9C93]"
-          }`}
+          className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${tom}`}
         >
-          <PinIcon className="h-3.5 w-3.5" strokeWidth={2.4} />
+          {impreciso && !aproximada ? (
+            <span className="h-2 w-2 animate-pulse-dot rounded-full bg-white" />
+          ) : (
+            <PinIcon className="h-3.5 w-3.5" strokeWidth={2.4} />
+          )}
         </span>
         <div className="min-w-0 flex-1">
           <p className="font-semibold leading-snug">
             {geo.dentro
               ? `Você está em ${geo.local ?? "área permitida"}`
-              : `Fora da área — a ${dist} m da fábrica`}
+              : aproximada
+                ? "Sua localização está aproximada"
+                : impreciso
+                  ? "Melhorando a precisão do GPS…"
+                  : `Fora da área — a ${dist} m da fábrica`}
           </p>
-          <p className="mt-0.5 text-[0.8125rem] text-white/65">
+          <p className="mt-0.5 text-[0.8125rem] leading-relaxed text-white/65">
             {geo.dentro
               ? `Precisão do GPS: ±${precisao} m`
-              : sinalFraco
-                ? `Sinal de GPS fraco (±${precisao} m). Vá para perto de uma porta ou janela.`
-                : `O limite é ${geo.raio ?? "?"} m. Precisão do GPS: ±${precisao} m.`}
+              : aproximada
+                ? "No iPhone: Ajustes › Privacidade › Serviços de Localização › Safari (ou o app) › ative “Localização Precisa”. No Android: ative o GPS em alta precisão."
+                : impreciso
+                  ? `Precisão atual ±${precisao} m. Aguarde alguns segundos, de preferência perto de uma porta ou janela.`
+                  : `O limite é ${geo.raio ?? "?"} m. Precisão do GPS: ±${precisao} m.`}
           </p>
         </div>
       </div>
@@ -391,6 +411,7 @@ export function Comprovante({
 }) {
   const d = new Date(resultado.marcado_em);
   return (
+    <TelaCheia>
     <div
       role="dialog"
       aria-modal="true"
@@ -436,5 +457,6 @@ export function Comprovante({
         </button>
       </div>
     </div>
+    </TelaCheia>
   );
 }

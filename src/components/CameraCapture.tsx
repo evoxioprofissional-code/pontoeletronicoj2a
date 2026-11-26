@@ -10,6 +10,7 @@ import {
 } from "@/lib/face/liveness";
 import { AlertIcon, XIcon } from "./icons";
 import { botao } from "./ui";
+import { TelaCheia } from "./TelaCheia";
 
 interface Props {
   titulo: string;
@@ -196,7 +197,7 @@ export function CameraCapture({
           setMsg("Erro ao processar a imagem. Tentando de novo…");
         }
         // Pequena pausa para não travar celulares mais fracos.
-        await new Promise((r) => setTimeout(r, 120));
+        await new Promise((r) => setTimeout(r, 40));
       }
     }
     laco();
@@ -237,6 +238,7 @@ export function CameraCapture({
   const passo = PASSO[etapa];
 
   return (
+    <TelaCheia>
     <div
       data-captura
       role="dialog"
@@ -393,5 +395,6 @@ export function CameraCapture({
         </div>
       </div>
     </div>
+    </TelaCheia>
   );
 }

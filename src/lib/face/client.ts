@@ -68,6 +68,29 @@ function videoPronto(video: HTMLVideoElement): boolean {
   return video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0;
 }
 
+/*
+ * Velocidade: a câmera entrega até 1280 px; mandar isso para a rede neural a
+ * cada quadro deixava o iPhone lento. Reduzimos cada quadro para no máximo
+ * 480 px num canvas reaproveitado — o detector trabalha em 320 px de todo jeito.
+ */
+const LADO_MAX = 480;
+let tela: HTMLCanvasElement | null = null;
+
+function quadroReduzido(video: HTMLVideoElement): HTMLCanvasElement {
+  const escala = Math.min(1, LADO_MAX / Math.max(video.videoWidth, video.videoHeight));
+  const w = Math.round(video.videoWidth * escala);
+  const h = Math.round(video.videoHeight * escala);
+  if (!tela) tela = document.createElement("canvas");
+  if (tela.width !== w) tela.width = w;
+  if (tela.height !== h) tela.height = h;
+  tela.getContext("2d", { alpha: false })?.drawImage(video, 0, 0, w, h);
+  return tela;
+}
+
+// Leituras seguidas sem rosto: a tentativa reforçada (mais pesada) só roda
+// de tempos em tempos, não em todo quadro.
+let falhasSeguidas = 0;
+
 /**
  * Detecta um único rosto no vídeo e retorna o descritor (128 números).
  * Retorna null se nenhum rosto for detectado.
@@ -77,13 +100,15 @@ export async function extrairDescritor(
 ): Promise<number[] | null> {
   if (!videoPronto(video)) return null;
   const faceapi = await getFaceApi();
+  // Captura final: primeiro no tamanho rápido; o maior só se não achar.
+  const quadro = quadroReduzido(video);
   let deteccao = await faceapi
-    .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions(CAPTURA))
+    .detectSingleFace(quadro, new faceapi.TinyFaceDetectorOptions(LEITURA))
     .withFaceLandmarks()
     .withFaceDescriptor();
   if (!deteccao) {
     deteccao = await faceapi
-      .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions(LEITURA))
+      .detectSingleFace(quadro, new faceapi.TinyFaceDetectorOptions(CAPTURA))
       .withFaceLandmarks()
       .withFaceDescriptor();
   }
@@ -100,16 +125,21 @@ export async function lerRosto(
 ): Promise<import("./liveness").LeituraRosto | null> {
   if (!videoPronto(video)) return null;
   const faceapi = await getFaceApi();
-  let det = await faceapi
-    .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions(LEITURA))
+  const quadro = quadroReduzido(video);
+  // A cada 3 falhas seguidas, tenta com mais detalhe (rosto pequeno ou
+  // pouca luz); nas demais, uma só detecção rápida por quadro.
+  const reforco = falhasSeguidas > 0 && falhasSeguidas % 3 === 0;
+  const det = await faceapi
+    .detectSingleFace(
+      quadro,
+      new faceapi.TinyFaceDetectorOptions(reforco ? LEITURA_REFORCO : LEITURA),
+    )
     .withFaceLandmarks();
   if (!det) {
-    // Segunda tentativa com imagem maior (rosto pequeno ou pouca luz).
-    det = await faceapi
-      .detectSingleFace(video, new faceapi.TinyFaceDetectorOptions(LEITURA_REFORCO))
-      .withFaceLandmarks();
+    falhasSeguidas++;
+    return null;
   }
-  if (!det) return null;
+  falhasSeguidas = 0;
 
   // Modelo de 68 pontos: 36–41 olho esquerdo, 42–47 olho direito, 30 = ponta
   // do nariz. Usar o centro de cada olho (e não só o canto) dá menos ruído.
