@@ -144,7 +144,7 @@ export function EspelhoView({
       </header>
 
       {/* Totais */}
-      <dl className="mb-5 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-5 print:grid-cols-5 print:rounded-none">
+      <dl className="mb-5 grid grid-cols-2 gap-px overflow-hidden rounded-card bg-line shadow-card sm:grid-cols-5 print:grid-cols-5 print:rounded-none">
         <Total rotulo="Trabalhado" valor={formatarMinutos(banco.trabalhadoMin)} />
         <Total rotulo="Previsto" valor={formatarMinutos(banco.previstoMin)} />
         <Total
@@ -167,10 +167,10 @@ export function EspelhoView({
       </dl>
 
       {/* Dias */}
-      <div className="overflow-hidden rounded-xl border border-line bg-surface print:rounded-none">
+      <div className="overflow-hidden rounded-card bg-surface shadow-card print:rounded-none">
         <table className="w-full border-collapse text-sm print:text-xs">
           <thead>
-            <tr className="border-b border-line bg-paper text-left text-xs font-medium text-ink-3">
+            <tr className="border-b border-line text-left text-[0.75rem] font-semibold uppercase tracking-[0.04em] text-ink-3">
               <th scope="col" className="w-[4.25rem] px-3 py-2.5 font-medium sm:px-4 print:py-1">
                 Dia
               </th>
@@ -205,7 +205,7 @@ export function EspelhoView({
               return (
                 <tr
                   key={d.dia}
-                  className={`${!d.util ? "bg-paper/60" : ""} ${apagado ? "text-ink-3" : ""} print:break-inside-avoid`}
+                  className={`${!d.util ? "bg-sunken/40" : ""} ${apagado ? "text-ink-3" : ""} print:break-inside-avoid`}
                 >
                   <th
                     scope="row"

@@ -1,17 +1,12 @@
 import { AppShell } from "@/components/AppShell";
-import {
-  LiveClock,
-  DataExtenso,
-  Saudacao,
-  HorasHoje,
-} from "@/components/LiveClock";
+import { DataExtenso, Saudacao, RelogioAnel } from "@/components/LiveClock";
 import {
   PontoCliente,
   type CercaCliente,
   type GeoState,
 } from "@/components/PontoCliente";
-import { Cartao, StatusJornada, TituloSecao } from "@/components/ui";
-import { CheckIcon } from "@/components/icons";
+import { Grupo, LinhaGrupo, TituloSecao } from "@/components/ui";
+import { CheckIcon, ListIcon, InboxIcon, CalendarIcon, TipoIcon } from "@/components/icons";
 import {
   proximoTipo,
   statusDe,
@@ -32,6 +27,13 @@ export interface HomeViewProps {
   geoDemo?: GeoState;
 }
 
+const STATUS_HERO = {
+  off: "border-white/15 bg-white/5 text-[#C9D7DA]",
+  working: "border-[#1F6B47] bg-[#123020] text-[#7DDBA3]",
+  break: "border-[#6B5320] bg-[#2E2410] text-[#F5CF7A]",
+} as const;
+const STATUS_TXT = { off: "Fora de turno", working: "Em turno", break: "Em intervalo" } as const;
+
 export function HomeView({
   nome,
   gestor,
@@ -51,103 +53,103 @@ export function HomeView({
 
   return (
     <AppShell nome={nome} gestor={gestor} abaAtiva="/app">
-      <header className="mb-5 md:mb-7">
-        <p className="text-sm text-ink-3">
+      <header className="mb-5 px-1 md:mb-8">
+        <p className="text-[0.8125rem] text-ink-2">
           <DataExtenso />
         </p>
-        <h1 className="mt-0.5 text-2xl font-semibold tracking-tight text-ink md:text-[1.75rem]">
+        <h1 className="titulo-grande mt-1 text-ink">
           <Saudacao nome={primeiroNome} />
         </h1>
       </header>
 
-      <div className="grid gap-4 lg:grid-cols-2 lg:items-start lg:gap-6">
-        {/* Relógio + registrar */}
-        <Cartao className="p-5 sm:p-6">
-          <div className="mb-4 flex justify-center">
-            <StatusJornada
-              status={status}
-              desde={ultima ? horaLocal(ultima.marcado_em) : null}
-            />
-          </div>
-          <LiveClock />
-          <div className="mt-6">
-            <PontoCliente
-              cercas={cercas}
-              temFace={temFace}
-              proximoTipo={prox}
-              geoDemo={geoDemo}
-            />
-          </div>
-        </Cartao>
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:items-start lg:gap-8">
+        {/* Cartão principal: relógio, localização e registrar */}
+        <section
+          aria-label="Registrar ponto"
+          className="relative isolate overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-hero-2 to-hero p-5 text-white shadow-float sm:p-7"
+        >
+          {/* luz turquesa difusa atrás do relógio */}
+          <span
+            aria-hidden
+            className="pointer-events-none absolute left-1/2 top-24 -z-10 h-72 w-72 -translate-x-1/2 rounded-full bg-[#2BB3C0]/20 blur-3xl"
+          />
+          <div className="relative">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[0.75rem] font-extrabold uppercase tracking-[0.05em] ${STATUS_HERO[status]}`}>
+                <span className={`h-1.5 w-1.5 rounded-full bg-current ${status === "working" ? "animate-pulse-dot" : ""}`} />
+                {STATUS_TXT[status]}
+                {ultima && status !== "off" && (
+                  <span className="font-medium opacity-75">desde {horaLocal(ultima.marcado_em)}</span>
+                )}
+              </span>
+              <span className="text-[0.6875rem] font-extrabold uppercase tracking-[0.08em] text-[#8FA6AB]">Hoje</span>
+            </div>
 
-        <div className="flex flex-col gap-4 lg:gap-6">
+            <RelogioAnel marcacoes={marcacoes} cargaMin={cargaMin} inicialMin={trabalhadoMin} />
+
+            <div className="mt-5">
+              <PontoCliente
+                cercas={cercas}
+                temFace={temFace}
+                proximoTipo={prox}
+                geoDemo={geoDemo}
+              />
+            </div>
+          </div>
+        </section>
+
+        <div className="flex flex-col gap-6">
           {/* Linha do tempo de hoje */}
-          <Cartao className="p-5 sm:p-6">
-            <TituloSecao>Hoje</TituloSecao>
-            <ol>
+          <section>
+            <TituloSecao>Marcações de hoje</TituloSecao>
+            <ol className="overflow-hidden rounded-card bg-surface shadow-card">
               {passos.map((p, i) => {
                 const feito = p.marcado_em !== null;
-                const ultimo = i === passos.length - 1;
                 return (
-                  <li key={i} className="relative flex gap-3 pb-4 last:pb-0">
-                    {!ultimo && (
-                      <span
-                        aria-hidden
-                        className={`absolute left-[0.6875rem] top-6 h-[calc(100%-1.5rem)] w-px ${
-                          feito ? "bg-brand" : "bg-line-strong"
-                        }`}
-                      />
-                    )}
+                  <li key={i} className="flex items-center gap-3.5 pl-4">
                     <span
                       aria-hidden
-                      className={`relative z-10 mt-0.5 flex h-[1.375rem] w-[1.375rem] shrink-0 items-center justify-center rounded-full ${
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
                         feito
-                          ? "bg-brand text-white"
+                          ? "bg-brand text-on-brand"
                           : p.proximo
-                            ? "border-2 border-brand bg-surface"
-                            : "border-2 border-line-strong bg-surface"
+                            ? "border border-brand-line bg-brand-tint text-brand"
+                            : "border border-line-strong bg-sunken text-ink-3"
                       }`}
                     >
-                      {feito && <CheckIcon className="h-3.5 w-3.5" strokeWidth={2.6} />}
-                    </span>
-                    <span
-                      className={`flex-1 text-[0.9375rem] ${
-                        feito
-                          ? "font-medium text-ink"
-                          : p.proximo
-                            ? "font-medium text-brand"
-                            : "text-ink-3"
-                      }`}
-                    >
-                      {rotuloTipo(p.tipo)}
-                      {p.proximo && (
-                        <span className="block text-xs font-normal text-ink-3">
-                          próxima marcação
-                        </span>
+                      {feito ? (
+                        <CheckIcon className="h-[1.1rem] w-[1.1rem]" strokeWidth={2.6} />
+                      ) : (
+                        <TipoIcon tipo={p.tipo} className="h-[1.05rem] w-[1.05rem]" />
                       )}
                     </span>
-                    <span
-                      className={`num text-[0.9375rem] ${
-                        feito ? "font-medium text-ink" : "text-ink-3"
-                      }`}
-                    >
-                      {feito ? horaLocal(p.marcado_em!) : "--:--"}
+                    <span className="flex min-h-[3.5rem] flex-1 items-center gap-3 border-b border-line pr-4 [li:last-child_&]:border-b-0">
+                      <span className="flex-1">
+                        <span className={`block text-[0.9375rem] ${feito ? "font-bold text-ink" : p.proximo ? "font-bold text-ink" : "font-medium text-ink-3"}`}>
+                          {rotuloTipo(p.tipo)}
+                        </span>
+                        {p.proximo && <span className="block text-[0.75rem] font-semibold text-brand">Próxima marcação</span>}
+                      </span>
+                      <span className={`num text-[1.0625rem] ${feito ? "font-extrabold text-ink" : "text-ink-3/70"}`}>
+                        {feito ? horaLocal(p.marcado_em!) : "--:--"}
+                      </span>
                     </span>
                   </li>
                 );
               })}
             </ol>
-          </Cartao>
+          </section>
 
-          {/* Jornada */}
-          <Cartao className="p-5 sm:p-6">
-            <TituloSecao>Horas trabalhadas</TituloSecao>
-            <HorasHoje
-              marcacoes={marcacoes}
-              cargaMin={cargaMin}
-              inicialMin={trabalhadoMin}
-            />
-          </Cartao>
+          {/* Atalhos */}
+          <section>
+            <TituloSecao>Atalhos</TituloSecao>
+            <Grupo>
+              <LinhaGrupo href="/app/registros" icone={<ListIcon className="h-[1.1rem] w-[1.1rem]" />} titulo="Meus registros" sub="Todos os dias do mês" />
+              <LinhaGrupo href="/app/espelho" icone={<CalendarIcon className="h-[1.1rem] w-[1.1rem]" />} titulo="Espelho e banco de horas" sub="Saldo e folha do mês" />
+              <LinhaGrupo href="/app/solicitacoes" icone={<InboxIcon className="h-[1.1rem] w-[1.1rem]" />} titulo="Pedir ajuste ao RH" sub="Esqueceu de bater ou precisa abonar" />
+            </Grupo>
+          </section>
+
         </div>
       </div>
     </AppShell>

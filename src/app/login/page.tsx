@@ -30,13 +30,14 @@ export default function LoginPage() {
   return (
     <div className="grid min-h-dvh lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
       {/* Painel da marca — só em telas largas */}
-      <aside className="hidden flex-col justify-between bg-brand px-12 py-10 lg:flex">
+      <aside className="relative hidden flex-col justify-between overflow-hidden bg-gradient-to-b from-hero-2 to-hero px-14 py-12 lg:flex">
+        <span aria-hidden className="pointer-events-none absolute -right-40 -top-40 h-[34rem] w-[34rem] rounded-full bg-white/[0.07] blur-3xl" />
         <Marca invertido />
         <div className="max-w-md">
-          <p className="text-[2.5rem] font-semibold leading-[1.1] tracking-tight text-white">
+          <p className="relative text-[2.75rem] font-bold leading-[1.08] tracking-[-0.035em] text-white">
             Seu ponto, registrado na hora certa e no lugar certo.
           </p>
-          <ul className="mt-8 space-y-3 text-[0.9375rem] text-white/80">
+          <ul className="relative mt-10 space-y-4 text-[1rem] text-white/80">
             <li className="flex gap-3">
               <span className="num text-white/50">01</span>
               Confirma que é você pelo rosto.
@@ -57,11 +58,9 @@ export default function LoginPage() {
       {/* Formulário */}
       <main className="app-gutter flex flex-col justify-center bg-paper pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] sm:px-8">
         <div className="mx-auto w-full max-w-sm">
-          <Marca className="mb-10 lg:hidden" />
+          <Marca className="mb-12 lg:hidden" />
 
-          <h1 className="text-2xl font-semibold tracking-tight text-ink">
-            Entrar
-          </h1>
+          <h1 className="titulo-grande text-ink">Entrar</h1>
           <p className="mt-1 text-[0.9375rem] text-ink-2">
             Use o e-mail e a senha que o RH passou para você.
           </p>
@@ -76,7 +75,7 @@ export default function LoginPage() {
                 autoCapitalize="none"
                 spellCheck={false}
                 required
-                className="campo min-h-[3rem]"
+                className="campo min-h-[3.25rem]"
                 placeholder="nome@empresa.com"
               />
             </Campo>
@@ -88,14 +87,14 @@ export default function LoginPage() {
                   type={verSenha ? "text" : "password"}
                   autoComplete="current-password"
                   required
-                  className="campo min-h-[3rem] pr-12"
+                  className="campo min-h-[3.25rem] pr-12"
                 />
                 <button
                   type="button"
                   onClick={() => setVerSenha((v) => !v)}
                   aria-label={verSenha ? "Esconder senha" : "Mostrar senha"}
                   aria-pressed={verSenha}
-                  className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-lg text-ink-3 hover:text-ink"
+                  className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-xl text-ink-3 hover:text-ink"
                 >
                   {verSenha ? (
                     <EyeOffIcon className="h-5 w-5" />

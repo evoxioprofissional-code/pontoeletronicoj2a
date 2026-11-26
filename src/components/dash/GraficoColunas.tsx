@@ -19,12 +19,13 @@ export interface Coluna {
 }
 
 const COR = {
-  serie: "#0E4F5E",
-  serieAtiva: "#0A3D49",
-  ref: "#8B9498",
-  grade: "#E9E5DD",
-  eixo: "#636E73",
-  faixa: "#F1EEE8",
+  // Variáveis CSS: trocam sozinhas no modo escuro.
+  serie: "rgb(var(--brand))",
+  serieAtiva: "rgb(var(--brand-strong))",
+  ref: "rgb(var(--ink-3))",
+  grade: "rgb(var(--line) / 0.7)",
+  eixo: "rgb(var(--ink-3))",
+  faixa: "rgb(var(--sunken) / 0.8)",
 };
 
 const M = { topo: 10, direita: 8, base: 26, esquerda: 40 };
@@ -195,7 +196,7 @@ export function GraficoColunas({
                   x2={largura - M.direita}
                   y1={y(v)}
                   y2={y(v)}
-                  stroke={i === 0 ? "#CBC5BA" : COR.grade}
+                  style={{ stroke: i === 0 ? "rgb(var(--line-strong))" : COR.grade }}
                   strokeWidth={1}
                 />
                 <text
@@ -204,8 +205,7 @@ export function GraficoColunas({
                   dy="0.32em"
                   textAnchor="end"
                   fontSize={11}
-                  fill={COR.eixo}
-                  style={{ fontVariantNumeric: "tabular-nums" }}
+                  style={{ fill: COR.eixo, fontVariantNumeric: "tabular-nums" }}
                 >
                   {fmtEixo(v)}
                 </text>
@@ -219,7 +219,7 @@ export function GraficoColunas({
                 y={M.topo}
                 width={banda}
                 height={h}
-                fill={COR.faixa}
+                style={{ fill: COR.faixa }}
               />
             )}
 
@@ -229,7 +229,7 @@ export function GraficoColunas({
                 <path
                   key={i}
                   d={barra(i, c.valor)}
-                  fill={i === ativo ? COR.serieAtiva : COR.serie}
+                  style={{ fill: i === ativo ? COR.serieAtiva : COR.serie }}
                 />
               ) : null,
             )}
@@ -239,7 +239,7 @@ export function GraficoColunas({
               <path
                 d={caminhoRef}
                 fill="none"
-                stroke={COR.ref}
+                style={{ stroke: COR.ref }}
                 strokeWidth={2}
                 strokeLinejoin="round"
                 strokeLinecap="round"
@@ -256,8 +256,7 @@ export function GraficoColunas({
                   textAnchor="middle"
                   fontSize={11}
                   fontWeight={i === destaque ? 600 : 400}
-                  fill={i === destaque ? "#141C1F" : c.apagado ? "#A3A9AC" : COR.eixo}
-                  style={{ fontVariantNumeric: "tabular-nums" }}
+                  style={{ fill: i === destaque ? "rgb(var(--ink))" : c.apagado ? "rgb(var(--ink-3) / 0.6)" : COR.eixo, fontVariantNumeric: "tabular-nums" }}
                 >
                   {c.rotulo}
                 </text>
@@ -290,7 +289,7 @@ export function GraficoColunas({
         {d && !semDados && (
           <div
             role="status"
-            className="pointer-events-none absolute z-10 w-max min-w-[10rem] max-w-[14rem] -translate-x-1/2 -translate-y-full rounded-lg border border-line bg-surface px-3 py-2 shadow-pop"
+            className="pointer-events-none absolute z-10 w-max min-w-[10rem] max-w-[14rem] -translate-x-1/2 -translate-y-full rounded-2xl bg-surface shadow-card px-3 py-2 shadow-pop"
             style={{ left: dicaX, top: dicaY }}
           >
             <p className="text-xs text-ink-3">{d.dica.titulo}</p>

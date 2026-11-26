@@ -202,7 +202,7 @@ export function SecaoFeriados({
             <input type="hidden" name="ano" value={ano} />
             <Enviar variante="secundario">Adicionar feriados nacionais de {ano}</Enviar>
             <label className="flex items-center gap-2 text-sm text-ink-2">
-              <input type="checkbox" name="facultativos" className="h-4 w-4 accent-[#0E4F5E]" />
+              <input type="checkbox" name="facultativos" className="h-4 w-4" />
               Incluir Carnaval e Corpus Christi
             </label>
           </form>

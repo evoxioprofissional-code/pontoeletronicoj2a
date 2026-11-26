@@ -54,6 +54,10 @@ interface Props {
   geoDemo?: GeoState;
 }
 
+// Peças sobre o cartão escuro da tela inicial.
+const CHIP = "flex items-center gap-2.5 rounded-[13px] border border-white/10 bg-white/[0.05] px-3.5 py-3 text-[0.875rem] text-white";
+
+
 /** O que mostrar e o que a pessoa deve FAZER em cada falha de localização. */
 const GEO_AJUDA: Record<
   Exclude<GeoFase, "carregando" | "ok">,
@@ -209,12 +213,12 @@ export function PontoCliente({ cercas, temFace, proximoTipo, geoDemo }: Props) {
               setModal("ponto");
             }}
             disabled={!podeBater}
-            className={botao("primario", "lg", "w-full")}
+            className="toque mt-1 flex min-h-[3.25rem] w-full items-center justify-center gap-2.5 rounded-[0.8rem] bg-[#2BB3C0] text-[0.9375rem] font-extrabold text-[#04191C] hover:bg-[#3CC6D3] disabled:bg-white/10 disabled:text-white/40"
           >
-            <TipoIcon tipo={proximoTipo} className="h-5 w-5" />
+            <TipoIcon tipo={proximoTipo} className="h-5 w-5" strokeWidth={2.2} />
             {acaoTipo(proximoTipo)}
           </button>
-          <p className="text-center text-sm text-ink-3">
+          <p className="text-center text-[0.75rem] text-[#8FA6AB]">
             {podeBater
               ? "Vamos confirmar seu rosto antes de registrar."
               : geo.fase === "carregando"
@@ -225,9 +229,9 @@ export function PontoCliente({ cercas, temFace, proximoTipo, geoDemo }: Props) {
           </p>
         </>
       ) : (
-        <div className="rounded-lg border border-brand-line bg-brand-tint p-4">
-          <p className="mb-1 font-semibold text-ink">Cadastre seu rosto</p>
-          <p className="mb-3 text-sm text-ink-2">
+        <div className="mt-1 rounded-[13px] border border-white/10 bg-white/[0.05] p-4 text-white">
+          <p className="mb-1 font-semibold">Cadastre seu rosto</p>
+          <p className="mb-3 text-sm text-white/70">
             É só uma vez. Depois disso você registra o ponto olhando para a
             câmera.
           </p>
@@ -237,7 +241,7 @@ export function PontoCliente({ cercas, temFace, proximoTipo, geoDemo }: Props) {
               setErro(null);
               setModal("cadastro");
             }}
-            className={botao("primario", "lg", "w-full")}
+            className="toque flex min-h-[3.25rem] w-full items-center justify-center gap-2 rounded-[0.8rem] bg-[#2BB3C0] text-[0.9375rem] font-extrabold text-[#04191C]"
           >
             <ScanFaceIcon className="h-5 w-5" />
             Cadastrar meu rosto
@@ -245,7 +249,12 @@ export function PontoCliente({ cercas, temFace, proximoTipo, geoDemo }: Props) {
         </div>
       )}
 
-      {erro && <Aviso tom="erro">{erro}</Aviso>}
+      {erro && (
+        <div role="alert" className="flex items-start gap-2.5 rounded-[13px] border border-[#6B2E2E] bg-[#3A1C1C] px-4 py-3 text-[0.875rem] text-[#FFC9C4]">
+          <span aria-hidden className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[#FF8A80]" />
+          <span>{erro}</span>
+        </div>
+      )}
 
       {modal === "cadastro" && (
         <CameraCapture
@@ -289,12 +298,9 @@ function Localizacao({
 }) {
   if (geo.fase === "carregando") {
     return (
-      <div
-        role="status"
-        className="flex items-center gap-2.5 rounded-lg border border-line bg-paper px-3.5 py-3 text-sm text-ink-2"
-      >
-        <span className="h-2 w-2 animate-pulse-dot rounded-full bg-brand" />
-        Procurando sua localização…
+      <div role="status" className={CHIP}>
+        <span className="h-2 w-2 animate-pulse-dot rounded-full bg-white" />
+        <span className="text-white/80">Procurando sua localização…</span>
       </div>
     );
   }
@@ -304,22 +310,22 @@ function Localizacao({
     const precisao = Math.round(geo.precisao ?? 0);
     const sinalFraco = !geo.dentro && precisao > TOLERANCIA_GPS_MAX_M;
     return (
-      <div
-        role="status"
-        className={`flex items-start gap-2.5 rounded-lg border px-3.5 py-3 text-sm ${
-          geo.dentro
-            ? "border-ok-line bg-ok-tint text-ok"
-            : "border-danger-line bg-danger-tint text-danger"
-        }`}
-      >
-        <PinIcon className="mt-0.5 h-[1.125rem] w-[1.125rem] shrink-0" />
+      <div role="status" className={`${CHIP} items-start`}>
+        <span
+          aria-hidden
+          className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
+            geo.dentro ? "bg-[#123020] text-[#7DDBA3]" : "bg-[#3A1C1C] text-[#FF9C93]"
+          }`}
+        >
+          <PinIcon className="h-3.5 w-3.5" strokeWidth={2.4} />
+        </span>
         <div className="min-w-0 flex-1">
-          <p className="font-semibold">
+          <p className="font-semibold leading-snug">
             {geo.dentro
               ? `Você está em ${geo.local ?? "área permitida"}`
               : `Fora da área — a ${dist} m da fábrica`}
           </p>
-          <p className="mt-0.5 text-[0.8125rem] opacity-90">
+          <p className="mt-0.5 text-[0.8125rem] text-white/65">
             {geo.dentro
               ? `Precisão do GPS: ±${precisao} m`
               : sinalFraco
@@ -334,19 +340,24 @@ function Localizacao({
   const ajuda = GEO_AJUDA[geo.fase];
   const podeTentar = geo.fase !== "sem_cerca" && geo.fase !== "sem_suporte";
   return (
-    <Aviso tom="erro">
-      <p className="font-semibold">{ajuda.titulo}</p>
-      <p className="mt-0.5">{ajuda.acao}</p>
-      {podeTentar && (
-        <button
-          type="button"
-          onClick={onTentar}
-          className="mt-2 rounded-md border border-danger-line bg-surface px-3 py-1.5 text-sm font-semibold text-danger"
-        >
-          Tentar novamente
-        </button>
-      )}
-    </Aviso>
+    <div role="alert" className={`${CHIP} items-start`}>
+      <span aria-hidden className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#3A1C1C] text-[#FF9C93]">
+        <PinIcon className="h-3.5 w-3.5" strokeWidth={2.4} />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="font-semibold leading-snug">{ajuda.titulo}</p>
+        <p className="mt-0.5 text-[0.8125rem] leading-relaxed text-white/70">{ajuda.acao}</p>
+        {podeTentar && (
+          <button
+            type="button"
+            onClick={onTentar}
+            className="toque mt-2.5 rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-[0.75rem] font-bold text-white"
+          >
+            Tentar novamente
+          </button>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -363,13 +374,9 @@ const HORA_COMPROVANTE = new Intl.DateTimeFormat("pt-BR", {
 
 function LinhaComprovante({ rotulo, valor }: { rotulo: string; valor: string }) {
   return (
-    <div className="flex items-baseline gap-2 py-1.5">
-      <dt className="text-sm text-ink-3">{rotulo}</dt>
-      <span
-        aria-hidden
-        className="mb-1 flex-1 border-b border-dotted border-line-strong"
-      />
-      <dd className="num text-right text-sm font-medium text-ink">{valor}</dd>
+    <div className="flex items-baseline justify-between gap-4 border-b border-line py-3 last:border-b-0">
+      <dt className="text-[0.9375rem] text-ink-3">{rotulo}</dt>
+      <dd className="num text-right text-[0.9375rem] font-medium text-ink">{valor}</dd>
     </div>
   );
 }
@@ -388,27 +395,27 @@ export function Comprovante({
       role="dialog"
       aria-modal="true"
       aria-labelledby="comprovante-titulo"
-      className="app-gutter fixed inset-0 z-50 flex flex-col items-center overflow-y-auto overscroll-contain bg-paper pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))]"
+      className="app-gutter fixed inset-0 z-50 flex flex-col items-center overflow-y-auto overscroll-contain bg-paper/95 backdrop-blur-xl pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))]"
     >
       <div className="my-auto w-full max-w-sm shrink-0 animate-fade-up">
         <div className="mb-5 flex flex-col items-center text-center">
-          <span className="mb-4 flex h-14 w-14 animate-check-in items-center justify-center rounded-full bg-ok text-white">
-            <CheckIcon className="h-8 w-8" strokeWidth={2.4} />
+          <span className="relative mb-5 flex h-20 w-20 items-center justify-center">
+            <span aria-hidden className="absolute inset-0 animate-respirar rounded-full bg-ok" />
+            <span className="relative flex h-20 w-20 animate-check-in items-center justify-center rounded-full bg-ok text-white">
+              <CheckIcon className="h-10 w-10" strokeWidth={2.6} />
+            </span>
           </span>
-          <h2
-            id="comprovante-titulo"
-            className="text-xl font-semibold text-ink"
-          >
+          <h2 id="comprovante-titulo" className="text-[1.375rem] font-semibold tracking-[-0.02em] text-ink">
             {confirmacaoTipo(resultado.tipo)}
           </h2>
-          <p className="num mt-1 text-[2.75rem] font-medium leading-none text-ink">
+          <p className="num mt-1.5 text-[3.5rem] font-semibold leading-none tracking-[-0.04em] text-ink">
             {HORA_COMPROVANTE.format(d).slice(0, 5)}
           </p>
         </div>
 
-        <div className="rounded-xl border border-line bg-surface px-5 py-4">
-          <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-ink-3">
-            Comprovante
+        <div className="rounded-card bg-surface px-5 pb-2 pt-4 shadow-card">
+          <p className="text-[0.8125rem] font-semibold text-ink-3">
+            Comprovante de registro
           </p>
           <dl>
             <LinhaComprovante rotulo="Tipo" valor={rotuloTipo(resultado.tipo)} />

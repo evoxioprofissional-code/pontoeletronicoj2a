@@ -64,7 +64,7 @@ export function BancoHorasView({
         }
       />
 
-      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line lg:grid-cols-3">
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-card bg-line shadow-card lg:grid-cols-3">
         <Numero
           rotulo="Saldo da equipe no mês"
           valor={formatarSaldo(saldoMes)}
@@ -99,7 +99,7 @@ export function BancoHorasView({
       ) : (
         <Cartao as="div" className="mt-5 overflow-hidden">
           <div
-            className={`hidden gap-4 border-b border-line bg-paper px-5 py-2.5 text-xs font-medium text-ink-3 md:grid ${COLUNAS}`}
+            className={`hidden gap-4 border-b border-line px-5 py-3 text-[0.75rem] font-semibold uppercase tracking-[0.04em] text-ink-3 md:grid ${COLUNAS}`}
           >
             <span>Colaborador</span>
             <span className="text-right">Trabalhado</span>
@@ -113,7 +113,7 @@ export function BancoHorasView({
               <li key={pessoa.id}>
                 <Link
                   href={`/admin/espelho/${pessoa.id}?mes=${mes}`}
-                  className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 px-4 py-3.5 transition-colors hover:bg-paper sm:px-5 ${COLUNAS}`}
+                  className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 px-4 py-3.5 transition-colors hover:bg-sunken/60 sm:px-5 ${COLUNAS}`}
                 >
                   <span className="flex min-w-0 items-center gap-3">
                     <Avatar nome={pessoa.nome} />

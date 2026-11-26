@@ -1,29 +1,45 @@
-/** Símbolo: ponteiros de relógio dentro de um quadrado — "bater o ponto". */
+import { useId } from "react";
+
+/**
+ * Ícone do j2aponto: mostrador de relógio com um "check" no lugar dos
+ * ponteiros — ponto registrado. Azul-petróleo em degradê.
+ */
 export function LogoMark({
-  size = 28,
+  size = 32,
   invertido = false,
 }: {
   size?: number;
   invertido?: boolean;
 }) {
-  const fundo = invertido ? "#FFFFFF" : "#0E4F5E";
-  const traco = invertido ? "#0E4F5E" : "#FFFFFF";
+  const id = `j2a-${useId().replace(/:/g, "")}`;
   return (
     <svg width={size} height={size} viewBox="0 0 32 32" fill="none" aria-hidden>
-      <rect width="32" height="32" rx="7" fill={fundo} />
+      <defs>
+        <linearGradient id={id} x1="4" y1="2" x2="28" y2="30" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#14A3B2" />
+          <stop offset="1" stopColor="#075C66" />
+        </linearGradient>
+      </defs>
+      <rect width="32" height="32" rx="9" fill={invertido ? "#FFFFFF" : `url(#${id})`} />
+      {/* mostrador: arco aberto no topo direito, como um relógio "em movimento" */}
       <path
-        d="M16 8.500V16l5 3"
-        stroke={traco}
-        strokeWidth="2.600"
+        d="M22.6 9.4A9 9 0 1 0 25 16"
+        stroke={invertido ? "#0B7F8C" : "#FFFFFF"}
+        strokeWidth="2.4"
+        strokeLinecap="round"
+      />
+      <path
+        d="M11.6 16.2l3.2 3.2 7.6-7.8"
+        stroke={invertido ? "#0B7F8C" : "#FFFFFF"}
+        strokeWidth="2.6"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <circle cx="16" cy="24.500" r="1.400" fill={traco} />
     </svg>
   );
 }
 
-/** Marca completa: símbolo + nome. */
+/** Marca completa: ícone + "j2aponto". */
 export function Marca({
   invertido = false,
   className = "",
@@ -35,11 +51,11 @@ export function Marca({
     <span className={`inline-flex items-center gap-2 ${className}`}>
       <LogoMark invertido={invertido} />
       <span
-        className={`text-[1.0625rem] font-semibold tracking-tight ${
+        className={`text-[1.1875rem] font-extrabold leading-none tracking-[-0.045em] ${
           invertido ? "text-white" : "text-ink"
         }`}
       >
-        j2a<span className={invertido ? "text-white/70" : "text-brand"}>ponto</span>
+        j2a<span className={invertido ? "text-[#7FD8E1]" : "text-brand"}>ponto</span>
       </span>
     </span>
   );

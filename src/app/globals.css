@@ -2,8 +2,43 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ==========================================================================
+   Cores (canais RGB) — claro e escuro. Os componentes usam só estes nomes.
+   ========================================================================== */
 :root {
+  /* Identidade j2aponto: fundo claro, azul-petróleo vivo (turquesa),
+     cartão principal escuro em destaque. */
   color-scheme: light;
+  --paper: 244 246 247; /* #F4F6F7 */
+  --surface: 255 255 255;
+  --sunken: 237 241 242; /* #EDF1F2 */
+  --line: 224 230 232; /* #E0E6E8 */
+  --line-strong: 203 213 216;
+  --ink: 14 20 22; /* #0E1416 */
+  --ink-2: 66 80 85;
+  --ink-3: 104 117 122;
+  --brand: 11 127 140; /* #0B7F8C petróleo (texto e botões no claro) */
+  --brand-strong: 8 103 114;
+  --brand-tint: 226 243 245;
+  --brand-line: 174 220 226;
+  --brand-soft: 7 92 102; /* texto sobre o tom suave */
+  --on-brand: 255 255 255;
+  --ok: 22 128 64;
+  --ok-tint: 226 245 233;
+  --ok-line: 170 220 190;
+  --warn: 166 96 0;
+  --warn-tint: 253 242 222;
+  --warn-line: 238 208 150;
+  --danger: 196 44 44;
+  --danger-tint: 252 233 232;
+  --danger-line: 240 188 186;
+  --hero: 14 20 22; /* #0E1416 cartão principal */
+  --hero-2: 21 29 32; /* #151D20 */
+
+  --sombra-card: 0 0 0 1px rgb(var(--line)), 0 1px 2px rgb(14 20 22 / 0.04);
+  --sombra-float: 0 0 0 1px rgb(var(--line)), 0 14px 34px -16px rgb(14 20 22 / 0.28);
+  --sombra-pop: 0 0 0 1px rgb(var(--line)), 0 24px 56px -18px rgb(14 20 22 / 0.35);
+  --vidro: 255 255 255 / 0.86;
 }
 
 html {
@@ -11,52 +46,106 @@ html {
 }
 
 body {
-  background: #f6f4f0;
-  color: #141c1f;
+  background: rgb(var(--paper));
+  color: rgb(var(--ink));
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   -webkit-tap-highlight-color: transparent;
+  letter-spacing: -0.005em;
 }
 
 /* Foco visível e consistente (teclado / leitor de tela) */
 :focus-visible {
-  outline: 2px solid #0e4f5e;
+  outline: 2px solid rgb(var(--brand));
   outline-offset: 2px;
 }
 
-/* Números de relógio e de horas sempre alinhados */
+/* Números de relógio e de horas sempre alinhados (mesma fonte do texto) */
 .num {
-  font-family: var(--font-mono), ui-monospace, monospace;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
+}
+
+/* Títulos grandes (peso forte, apertado — como no Haus Coach) */
+.titulo-grande {
+  font-size: clamp(1.875rem, 7.6vw, 2.375rem);
+  line-height: 1.06;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+/* Rótulo pequeno em caixa alta, acima de blocos */
+.rotulo {
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(var(--ink-2));
+}
+
+::selection {
+  background: rgb(var(--brand));
+  color: rgb(var(--on-brand));
+}
+
+/* Barra de vidro (topo e abas) */
+.vidro {
+  background: rgb(var(--vidro));
+  -webkit-backdrop-filter: saturate(160%) blur(18px);
+  backdrop-filter: saturate(160%) blur(18px);
+}
+
+/* Toque: leve encolhida ao pressionar, como nos apps nativos */
+.toque {
+  transition:
+    transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1),
+    background-color 0.16s,
+    opacity 0.16s;
+}
+.toque:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 /* Campos de formulário — um só estilo no app inteiro */
 .campo {
   display: block;
   width: 100%;
-  min-height: 2.75rem;
-  border-radius: 0.5rem;
-  border: 1px solid #cbc5ba;
-  background: #ffffff;
-  padding: 0.5rem 0.75rem;
+  min-height: 2.875rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgb(var(--line-strong));
+  background: rgb(var(--surface));
+  padding: 0.5rem 0.875rem;
   font-size: 1rem; /* 16px: o iPhone não dá zoom ao focar */
   line-height: 1.5rem;
-  color: #141c1f;
+  color: rgb(var(--ink));
   transition:
-    border-color 0.12s,
-    box-shadow 0.12s;
+    border-color 0.15s,
+    box-shadow 0.15s,
+    background-color 0.15s;
 }
 .campo::placeholder {
-  color: #8b9498;
-}
-.campo:hover {
-  border-color: #a9a297;
+  color: rgb(var(--ink-3));
 }
 .campo:focus {
   outline: none;
-  border-color: #0e4f5e;
-  box-shadow: 0 0 0 3px #e2eef0;
+  border-color: rgb(var(--brand-line));
+  box-shadow: 0 0 0 3px rgb(var(--brand) / 0.18);
+}
+.campo:disabled {
+  opacity: 0.6;
+}
+select.campo {
+  appearance: none;
+  padding-right: 2.25rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23687a7f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 10l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+  background-size: 1.1rem;
+}
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: rgb(var(--brand));
 }
 
 /* Espaço para a barra de gestos / entalhe do celular */
@@ -81,11 +170,22 @@ body {
   }
 }
 
-/* Impressão (espelho de ponto): folha branca, margens de papel */
+/* Impressão (espelho de ponto): sempre claro, folha branca */
 @page {
   margin: 14mm;
 }
 @media print {
+  :root {
+    color-scheme: light;
+    --paper: 255 255 255;
+    --surface: 255 255 255;
+    --sunken: 245 245 245;
+    --line: 210 210 210;
+    --ink: 0 0 0;
+    --ink-2: 50 50 50;
+    --ink-3: 90 90 90;
+    --sombra-card: none;
+  }
   html,
   body {
     background: #ffffff !important;

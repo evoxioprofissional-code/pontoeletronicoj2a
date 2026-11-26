@@ -2,7 +2,7 @@ import Link from "next/link";
 import { CabecalhoPagina } from "@/components/dash/AdminShell";
 import { NovoColaborador } from "@/components/dash/NovoColaborador";
 import { ImportarColaboradores } from "@/components/dash/ImportarColaboradores";
-import { Avatar, Cartao, Etiqueta, Progresso, StatusJornada } from "@/components/ui";
+import { Avatar, Cartao, Etiqueta, Progresso, Segmentado, StatusJornada } from "@/components/ui";
 import { ArrowRight } from "@/components/icons";
 import { formatarMinutos, type Status } from "@/lib/ponto";
 
@@ -73,22 +73,25 @@ export function ColaboradoresView({
         </div>
       )}
 
-      <div className="mb-4 flex flex-col gap-3 border-b border-line sm:flex-row sm:items-end sm:justify-between">
-        <nav aria-label="Situação" className="flex gap-1">
-          {(["ativos", "desligados"] as const).map((a) => (
-            <Link
-              key={a}
-              href={qs(a)}
-              aria-current={a === aba ? "page" : undefined}
-              className={`relative px-3 py-2.5 text-sm font-medium ${a === aba ? "text-brand" : "text-ink-2 hover:text-ink"}`}
-            >
-              {a === "ativos" ? "Ativos" : "Desligados"}
-              {totais && <span className="ml-1.5 text-ink-3">{a === "ativos" ? totais.ativos : totais.desligados}</span>}
-              {a === aba && <span className="absolute inset-x-3 -bottom-px h-0.5 rounded-full bg-brand" />}
-            </Link>
-          ))}
-        </nav>
-        <form className="mb-2 flex flex-wrap gap-2" action="/admin/colaboradores">
+      <div className="mb-1 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <Segmentado
+          ativo={aba}
+          itens={(["ativos", "desligados"] as const).map((a) => ({
+            id: a,
+            href: qs(a),
+            rotulo: (
+              <>
+                {a === "ativos" ? "Ativos" : "Desligados"}
+                {totais && (
+                  <span className="num font-medium text-ink-3">
+                    {a === "ativos" ? totais.ativos : totais.desligados}
+                  </span>
+                )}
+              </>
+            ),
+          }))}
+        />
+        <form className="mb-5 flex flex-wrap gap-2" action="/admin/colaboradores">
           {!ativos && <input type="hidden" name="aba" value="desligados" />}
           {equipes.length > 0 && (
             <select name="equipe" defaultValue={equipeFiltro} className="campo w-auto" aria-label="Filtrar por equipe">
@@ -103,7 +106,7 @@ export function ColaboradoresView({
             placeholder="Buscar nome, matrícula ou CPF"
             className="campo w-full sm:w-64"
           />
-          <button type="submit" className="rounded-lg border border-line-strong bg-surface px-4 text-sm font-medium text-ink hover:border-ink-3">
+          <button type="submit" className="toque rounded-ctl bg-surface px-4 text-sm font-semibold text-ink shadow-card hover:bg-sunken">
             Buscar
           </button>
         </form>
@@ -115,7 +118,7 @@ export function ColaboradoresView({
         </Cartao>
       ) : (
         <Cartao as="div" className="overflow-hidden">
-          <div className="hidden grid-cols-[minmax(0,1fr)_9rem_10rem_13rem_1.5rem] gap-4 border-b border-line bg-paper px-5 py-2.5 text-xs font-medium text-ink-3 lg:grid">
+          <div className="hidden grid-cols-[minmax(0,1fr)_9rem_10rem_13rem_1.5rem] gap-4 border-b border-line px-5 py-3 text-[0.75rem] font-semibold uppercase tracking-[0.04em] text-ink-3 lg:grid">
             <span>Colaborador</span>
             <span>Equipe</span>
             <span>{ativos ? "Situação" : "Desligado em"}</span>
@@ -127,7 +130,7 @@ export function ColaboradoresView({
               <li key={f.id}>
                 <Link
                   href={`/admin/funcionario/${f.id}`}
-                  className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-4 py-3.5 transition-colors hover:bg-paper sm:px-5 lg:grid-cols-[minmax(0,1fr)_9rem_10rem_13rem_1.5rem]"
+                  className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-4 py-3.5 transition-colors hover:bg-sunken/60 sm:px-5 lg:grid-cols-[minmax(0,1fr)_9rem_10rem_13rem_1.5rem]"
                 >
                   <span className="flex min-w-0 items-center gap-3">
                     <Avatar nome={f.nome} />

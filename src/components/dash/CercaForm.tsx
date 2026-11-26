@@ -107,7 +107,7 @@ export function CercaForm({ init }: { init: CercaInit | null }) {
           Onde fica
         </legend>
 
-        <div className="rounded-lg border border-brand-line bg-brand-tint p-4">
+        <div className="rounded-2xl bg-brand-tint p-4">
           <p className="text-sm text-ink-2">
             <strong className="font-semibold text-ink">
               Jeito mais preciso:

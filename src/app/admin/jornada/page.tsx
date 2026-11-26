@@ -60,7 +60,7 @@ export default async function JornadaPage({
   }
 
   const seta =
-    "flex h-9 w-9 items-center justify-center rounded-lg border border-line-strong bg-surface text-ink hover:border-ink-3";
+    "flex h-9 w-9 items-center justify-center toque rounded-full bg-surface text-ink shadow-card hover:bg-sunken";
 
   return (
     <>

@@ -49,16 +49,16 @@ export function RegistrosView({ nome, gestor, dias, hoje }: RegistrosViewProps) 
       <header className="mb-5 flex flex-wrap items-end justify-between gap-x-6 gap-y-3 md:mb-7">
         <div>
           <p className="text-sm text-ink-3">{mes}</p>
-          <h1 className="mt-0.5 text-2xl font-semibold tracking-tight text-ink md:text-[1.75rem]">
+          <h1 className="mt-0.5 titulo-grande text-ink">
             Meus registros
           </h1>
         </div>
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-          <Link href="/app/solicitacoes" className={botao("secundario", "md", "w-full sm:w-auto")}>
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
+          <Link href="/app/solicitacoes" className={botao("suave", "md", "px-3")}>
             Pedir ajuste
           </Link>
-          <Link href="/app/espelho" className={botao("secundario", "md", "w-full sm:w-auto")}>
-            Espelho e banco de horas
+          <Link href="/app/espelho" className={botao("suave", "md", "px-3")}>
+            Espelho do mês
           </Link>
         </div>
       </header>

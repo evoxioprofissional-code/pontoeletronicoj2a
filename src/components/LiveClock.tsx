@@ -48,9 +48,10 @@ export function Saudacao({ nome }: { nome: string }) {
   const h = now?.getHours();
   const texto =
     h == null ? "Olá" : h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
+  // Como no Haus Coach: o nome vem em coral, com ponto final.
   return (
     <>
-      {texto}, {nome}
+      {texto}, <span className="text-brand">{nome}.</span>
     </>
   );
 }
@@ -91,6 +92,59 @@ export function HorasHoje({
             ? `Faltam ${formatarMinutos(falta)} para completar a jornada.`
             : "Jornada do dia completa."}
       </p>
+    </div>
+  );
+}
+
+/**
+ * Relógio dentro de um anel que enche conforme as horas do dia — a peça
+ * central da tela inicial. Feito para o cartão escuro (texto branco).
+ */
+export function RelogioAnel({
+  marcacoes,
+  cargaMin,
+  inicialMin,
+}: {
+  marcacoes: MarcacaoLite[];
+  cargaMin: number;
+  inicialMin: number;
+}) {
+  const now = useClock();
+  const trabalhado = now ? minutosTrabalhados(marcacoes, now) : inicialMin;
+  const pct = cargaMin > 0 ? Math.min(1, trabalhado / cargaMin) : 0;
+  const R = 46;
+  const C = 2 * Math.PI * R;
+  return (
+    <div className="relative mx-auto aspect-square w-full max-w-[16rem] rounded-full bg-[#0A1012]/70">
+      <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full -rotate-90" aria-hidden>
+        <circle cx="50" cy="50" r={R} fill="none" stroke="#22313A" strokeWidth="4" />
+        <circle
+          cx="50"
+          cy="50"
+          r={R}
+          fill="none"
+          stroke={pct >= 1 ? "#7DDBA3" : "#2BB3C0"}
+          strokeWidth="4"
+          strokeLinecap="round"
+          strokeDasharray={C}
+          strokeDashoffset={C * (1 - pct)}
+          style={{ transition: "stroke-dashoffset 1s cubic-bezier(0.2,0.8,0.2,1)" }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
+        <p className="num flex items-baseline font-extrabold leading-none tracking-[-0.045em]" aria-label="Horário atual">
+          <span className="text-[clamp(3rem,15vw,4.25rem)]">
+            {now ? `${p2(now.getHours())}:${p2(now.getMinutes())}` : "--:--"}
+          </span>
+          <span className="ml-0.5 w-[2.2ch] text-left text-xl font-bold text-[#8FA6AB]">
+            {now ? p2(now.getSeconds()) : ""}
+          </span>
+        </p>
+        <p className="mt-2 text-[0.8125rem] font-semibold text-[#8FA6AB]">
+          <span className="num text-white">{formatarMinutos(trabalhado)}</span> de{" "}
+          <span className="num">{formatarMinutos(cargaMin)}</span>
+        </p>
+      </div>
     </div>
   );
 }

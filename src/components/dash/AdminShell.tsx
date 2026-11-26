@@ -57,17 +57,17 @@ export function AdminShell({
   return (
     <div className="min-h-screen bg-paper lg:flex print:block print:bg-white">
       {/* Barra lateral — computador */}
-      <aside className="hidden w-60 shrink-0 border-r border-line bg-surface lg:block print:!hidden">
+      <aside className="hidden w-64 shrink-0 border-r border-line bg-surface lg:block print:!hidden">
         <div className="sticky top-0 flex h-screen flex-col">
-          <div className="flex h-16 items-center px-5">
+          <div className="flex h-20 items-center px-6">
             <Link href="/admin" aria-label="Painel do RH — visão geral">
               <Marca />
             </Link>
           </div>
-          <p className="px-5 pb-2 pt-3 text-xs font-medium text-ink-3">
+          <p className="px-6 pb-2 text-[0.75rem] font-semibold uppercase tracking-[0.06em] text-ink-3">
             Painel do RH
           </p>
-          <nav aria-label="Painel do RH" className="flex-1 px-3">
+          <nav aria-label="Painel do RH" className="flex-1 px-4">
             <ul className="flex flex-col gap-0.5">
               {ITENS.map((it) => {
                 const on = ativo(it);
@@ -76,13 +76,19 @@ export function AdminShell({
                     <Link
                       href={it.href}
                       aria-current={on ? "page" : undefined}
-                      className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-[0.9375rem] font-medium transition-colors ${
+                      className={`toque flex items-center gap-3 rounded-xl border px-3 py-2 text-[0.9375rem] font-bold ${
                         on
-                          ? "bg-brand-tint text-brand"
-                          : "text-ink-2 hover:bg-paper hover:text-ink"
+                          ? "border-brand-line bg-brand-tint text-brand-soft"
+                          : "border-transparent text-ink-2 hover:bg-sunken hover:text-ink"
                       }`}
                     >
-                      <it.Icone className="h-5 w-5 shrink-0" />
+                      <span
+                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-[0.5rem] ${
+                          on ? "bg-brand text-on-brand" : "border border-line-strong bg-sunken text-ink-2"
+                        }`}
+                      >
+                        <it.Icone className="h-[1.05rem] w-[1.05rem]" />
+                      </span>
                       {it.rotulo}
                     </Link>
                   </li>
@@ -90,10 +96,10 @@ export function AdminShell({
               })}
             </ul>
           </nav>
-          <div className="border-t border-line p-3">
+          <div className="p-4">
             <Link
               href="/app"
-              className="flex items-center gap-2 rounded-md px-3 py-2.5 text-sm font-medium text-ink-2 hover:bg-paper hover:text-ink"
+              className="toque flex items-center gap-2 rounded-ctl px-3 py-2.5 text-sm font-semibold text-ink-2 hover:bg-surface/60 hover:text-ink"
             >
               <ArrowLeft className="h-4 w-4" />
               Voltar ao meu ponto
@@ -104,24 +110,24 @@ export function AdminShell({
 
       <div className="min-w-0 flex-1">
         {/* Topo — celular e tablet */}
-        <header className="safe-t sticky top-0 z-30 bg-surface shadow-bar lg:hidden print:hidden">
+        <header className="vidro safe-t sticky top-0 z-30 border-b border-line lg:hidden print:hidden">
           <div className="flex h-14 items-center justify-between px-4 sm:px-6">
             <Link href="/admin" className="flex items-center gap-2.5">
               <Marca />
-              <span className="rounded bg-paper px-1.5 py-0.5 text-xs font-medium text-ink-2 ring-1 ring-inset ring-line">
+              <span className="rounded-full bg-sunken px-2 py-0.5 text-xs font-semibold text-ink-2">
                 RH
               </span>
             </Link>
             <Link
               href="/app"
-              className="flex min-h-[2.75rem] items-center gap-1.5 text-sm font-medium text-ink-2"
+              className="toque flex min-h-[2.75rem] items-center gap-1 text-[0.875rem] font-bold text-brand-soft"
             >
               <ArrowLeft className="h-4 w-4" />
               Meu ponto
             </Link>
           </div>
-          <nav aria-label="Painel do RH" className="overflow-x-auto px-2 sm:px-4">
-            <ul className="flex min-w-max">
+          <nav aria-label="Painel do RH" className="overflow-x-auto px-3 pb-2.5 sm:px-5">
+            <ul className="flex min-w-max gap-1.5">
               {ITENS.map((it) => {
                 const on = ativo(it);
                 return (
@@ -129,14 +135,11 @@ export function AdminShell({
                     <Link
                       href={it.href}
                       aria-current={on ? "page" : undefined}
-                      className={`relative block whitespace-nowrap px-3 py-3 text-sm font-medium ${
-                        on ? "text-brand" : "text-ink-2"
+                      className={`toque block whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-semibold ${
+                        on ? "border border-brand-line bg-brand-tint text-brand-soft" : "border border-line-strong text-ink-2"
                       }`}
                     >
                       {it.rotulo}
-                      {on && (
-                        <span className="absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-brand" />
-                      )}
                     </Link>
                   </li>
                 );
@@ -145,7 +148,7 @@ export function AdminShell({
           </nav>
         </header>
 
-        <main className="mx-auto w-full max-w-[92rem] px-4 py-6 sm:px-6 lg:px-8 lg:py-8 2xl:px-12 print:max-w-none print:p-0">
+        <main className="mx-auto w-full max-w-[92rem] animate-fade-up px-4 py-6 sm:px-6 lg:py-10 lg:pl-4 lg:pr-10 2xl:pr-14 print:max-w-none print:p-0">
           {children}
         </main>
       </div>
@@ -164,13 +167,11 @@ export function CabecalhoPagina({
   acao?: ReactNode;
 }) {
   return (
-    <header className="mb-6 flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+    <header className="mb-7 flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
       <div className="min-w-0">
-        <h1 className="text-2xl font-semibold tracking-tight text-ink">
-          {titulo}
-        </h1>
+        <h1 className="titulo-grande text-ink">{titulo}</h1>
         {descricao && (
-          <p className="mt-1 text-[0.9375rem] text-ink-2">{descricao}</p>
+          <p className="mt-1.5 max-w-2xl text-[0.9375rem] leading-relaxed text-ink-2">{descricao}</p>
         )}
       </div>
       {acao}

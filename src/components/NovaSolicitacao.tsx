@@ -112,10 +112,10 @@ export function NovaSolicitacao({
           {CATEGORIAS.map((c) => (
             <label
               key={c.id}
-              className={`flex cursor-pointer flex-col gap-1 rounded-lg border p-3.5 transition-colors ${
+              className={`flex cursor-pointer flex-col gap-1 rounded-2xl border-2 p-3.5 transition-colors ${
                 categoria === c.id
                   ? "border-brand bg-brand-tint"
-                  : "border-line-strong bg-surface hover:border-ink-3"
+                  : "border-transparent bg-sunken hover:bg-sunken/70"
               }`}
             >
               <span className="flex items-center gap-2">
@@ -125,7 +125,7 @@ export function NovaSolicitacao({
                   value={c.id}
                   checked={categoria === c.id}
                   onChange={() => setCategoria(c.id)}
-                  className="h-4 w-4 accent-[#0E4F5E]"
+                  className="h-4 w-4"
                 />
                 <span className="font-medium text-ink">{c.titulo}</span>
               </span>

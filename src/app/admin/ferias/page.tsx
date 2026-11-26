@@ -4,7 +4,7 @@ import { CabecalhoPagina } from "@/components/dash/AdminShell";
 import { AvisoMigracao } from "@/components/dash/AvisoMigracao";
 import { FormFerias } from "@/components/dash/FormFerias";
 import { BotaoConfirmar } from "@/components/dash/BotaoConfirmar";
-import { Avatar, Aviso, Cartao, Etiqueta, TituloSecao } from "@/components/ui";
+import { Avatar, Aviso, Cartao, Etiqueta, Segmentado, TituloSecao } from "@/components/ui";
 import { excluirFerias } from "./actions";
 import { contextoGestor } from "@/lib/relatorios";
 import { dataLocal } from "@/lib/ponto";
@@ -111,25 +111,13 @@ export default async function FeriasPage({ searchParams }: { searchParams: { aba
     <>
       <CabecalhoPagina titulo="Férias" descricao="Lançamento de férias e controle de quem tem férias para vencer." />
 
-      <nav aria-label="Abas" className="mb-5 flex gap-1 border-b border-line">
-        {[
+      <Segmentado
+        ativo={aba}
+        itens={[
           { id: "lancadas", rotulo: "Lançamentos", href: "/admin/ferias" },
-          { id: "saldos", rotulo: "Saldos e vencimentos", href: "/admin/ferias?aba=saldos" },
-        ].map((a) => (
-          <Link
-            key={a.id}
-            href={a.href}
-            aria-current={a.id === aba ? "page" : undefined}
-            className={`relative px-3 py-2.5 text-sm font-medium ${a.id === aba ? "text-brand" : "text-ink-2 hover:text-ink"}`}
-          >
-            {a.rotulo}
-            {a.id === "saldos" && alertas > 0 && (
-              <span className="ml-1.5 rounded-full bg-warn-tint px-1.5 py-0.5 text-xs font-semibold text-warn">{alertas}</span>
-            )}
-            {a.id === aba && <span className="absolute inset-x-3 -bottom-px h-0.5 rounded-full bg-brand" />}
-          </Link>
-        ))}
-      </nav>
+          { id: "saldos", rotulo: "Saldos e vencimentos", href: "/admin/ferias?aba=saldos", contador: alertas },
+        ]}
+      />
 
       {aba === "lancadas" ? (
         <div className="flex flex-col gap-7">
@@ -160,7 +148,7 @@ export default async function FeriasPage({ searchParams }: { searchParams: { aba
             </Aviso>
           )}
           <Cartao as="div" className="overflow-hidden">
-            <div className="hidden grid-cols-[minmax(0,1fr)_7rem_6rem_6rem_9rem_8rem] gap-4 border-b border-line bg-paper px-5 py-2.5 text-xs font-medium text-ink-3 lg:grid">
+            <div className="hidden grid-cols-[minmax(0,1fr)_7rem_6rem_6rem_9rem_8rem] gap-4 border-b border-line px-5 py-3 text-[0.75rem] font-semibold uppercase tracking-[0.04em] text-ink-3 lg:grid">
               <span>Colaborador</span><span>Admissão</span><span className="text-right">Direito</span>
               <span className="text-right">Saldo</span><span>Tirar até</span><span>Situação</span>
             </div>

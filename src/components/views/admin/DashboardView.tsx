@@ -70,9 +70,9 @@ function Sparkline({ valores }: { valores: number[] }) {
   const [ux, uy] = pts[pts.length - 1];
   return (
     <svg width={L} height={A} aria-hidden className="shrink-0">
-      <path d={`${linha}L${ux},${A}L2,${A}Z`} fill="#0E4F5E" opacity={0.1} />
-      <path d={linha} fill="none" stroke="#0E4F5E" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
-      <circle cx={ux} cy={uy} r={4} fill="#0E4F5E" stroke="#fff" strokeWidth={2} />
+      <path d={`${linha}L${ux},${A}L2,${A}Z`} style={{ fill: "rgb(var(--brand) / 0.12)" }} />
+      <path d={linha} fill="none" style={{ stroke: "rgb(var(--brand))" }} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
+      <circle cx={ux} cy={uy} r={4} style={{ fill: "rgb(var(--brand))", stroke: "rgb(var(--surface))" }} strokeWidth={2} />
     </svg>
   );
 }
@@ -110,10 +110,10 @@ const linkAcao =
 /* ---------- Presença ---------- */
 
 const SITUACAO: Record<SituacaoHoje, { rotulo: string; cor: string; texto: string }> = {
-  working: { rotulo: "Em turno", cor: "#1F8A5B", texto: "#FFFFFF" },
+  working: { rotulo: "Em turno", cor: "#16803F", texto: "#FFFFFF" },
   break: { rotulo: "Em intervalo", cor: "#D98F1F", texto: "#141C1F" },
   saiu: { rotulo: "Já saiu", cor: "#2B74C8", texto: "#FFFFFF" },
-  ausente: { rotulo: "Sem registro", cor: "#DDD8CE", texto: "#48545A" },
+  ausente: { rotulo: "Sem registro", cor: "rgb(var(--line-strong))", texto: "rgb(var(--ink-2))" },
 };
 const ORDEM: SituacaoHoje[] = ["working", "break", "saiu", "ausente"];
 
@@ -172,7 +172,7 @@ function Presenca({ d }: { d: PainelDados }) {
           <li key={p.id}>
             <Link
               href={`/admin/funcionario/${p.id}`}
-              className="-mx-2 flex items-center gap-3 rounded-md px-2 py-2.5 transition-colors hover:bg-paper"
+              className="-mx-2 flex items-center gap-3 rounded-md px-2 py-2.5 transition-colors hover:bg-sunken/60"
             >
               <Avatar nome={p.nome} tamanho="sm" />
               <span className="min-w-0 flex-1 truncate text-[0.9375rem] font-medium text-ink">
@@ -219,7 +219,7 @@ function HorasPorPessoa({ d }: { d: PainelDados }) {
         <li key={p.id}>
           <Link
             href={`/admin/espelho/${p.id}?mes=${d.mes}`}
-            className="-mx-2 block rounded-md px-2 py-1 transition-colors hover:bg-paper"
+            className="-mx-2 block rounded-md px-2 py-1 transition-colors hover:bg-sunken/60"
           >
             <div className="flex items-baseline justify-between gap-3">
               <span className="min-w-0 truncate text-[0.9375rem] font-medium text-ink">
@@ -235,7 +235,7 @@ function HorasPorPessoa({ d }: { d: PainelDados }) {
               </span>
             </div>
             {/* Barra = trabalhado; traço = previsto */}
-            <div className="relative mt-2 h-2 rounded-full bg-line">
+            <div className="relative mt-2 h-2 rounded-full bg-sunken">
               <div
                 className="h-full rounded-full bg-brand"
                 style={{ width: `${(p.trabalhadoMin / escala) * 100}%` }}
@@ -533,7 +533,7 @@ export function DashboardView({ empresa, mesAtual, hoje, d }: DashboardViewProps
             <ul className="divide-y divide-line">
               {d.ultimas.map((u, i) => (
                 <li key={i} className="flex items-center gap-3 py-2.5 first:pt-0">
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-tint text-brand">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-brand-tint text-brand">
                     <TipoIcon tipo={u.tipo} className="h-4 w-4" />
                   </span>
                   <span className="min-w-0 flex-1">

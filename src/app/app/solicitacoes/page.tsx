@@ -64,7 +64,7 @@ export default async function MinhasSolicitacoes({
       abaAtiva="/app/registros"
     >
       <header className="mb-5 md:mb-7">
-        <h1 className="text-2xl font-semibold tracking-tight text-ink md:text-[1.75rem]">
+        <h1 className="titulo-grande text-ink">
           Pedir ajuste ao RH
         </h1>
         <p className="mt-1 text-[0.9375rem] text-ink-2">
@@ -115,7 +115,7 @@ export default async function MinhasSolicitacoes({
                       </div>
                       <p className="mt-1.5 text-sm text-ink-2">{p.justificativa}</p>
                       {p.resposta && (
-                        <p className="mt-2 rounded-md bg-paper px-3 py-2 text-sm text-ink-2">
+                        <p className="mt-2 rounded-xl bg-sunken px-3.5 py-2.5 text-sm text-ink-2">
                           <span className="font-medium text-ink">Resposta do RH:</span>{" "}
                           {p.resposta}
                         </p>

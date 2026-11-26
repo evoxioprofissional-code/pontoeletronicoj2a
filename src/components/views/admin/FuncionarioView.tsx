@@ -47,7 +47,7 @@ export interface FuncionarioViewProps {
 }
 
 const navDia =
-  "flex h-11 w-11 items-center justify-center rounded-lg border border-line-strong bg-surface text-ink transition-colors hover:border-ink-3";
+  "flex h-11 w-11 items-center justify-center toque rounded-full bg-surface text-ink shadow-card hover:bg-sunken";
 
 export function FuncionarioView({
   func,
@@ -74,7 +74,7 @@ export function FuncionarioView({
       <header className="mb-6 flex flex-wrap items-center gap-4">
         <Avatar nome={func.nome} tamanho="lg" />
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-2xl font-semibold tracking-tight text-ink">
+          <h1 className="truncate text-[1.75rem] font-bold tracking-[-0.025em] text-ink">
             {func.nome}
           </h1>
           <p className="truncate text-sm text-ink-3">

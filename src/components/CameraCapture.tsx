@@ -213,7 +213,7 @@ export function CameraCapture({
         <button
           type="button"
           onClick={onCancelar}
-          className="-mr-2 flex h-11 items-center gap-1.5 rounded-lg px-3 text-sm font-medium text-ink-2 hover:bg-paper"
+          className="-mr-2 flex h-11 items-center gap-1.5 rounded-lg px-3 text-sm font-medium text-ink-2 hover:bg-sunken/60"
         >
           <XIcon className="h-5 w-5" />
           Cancelar
@@ -222,7 +222,7 @@ export function CameraCapture({
 
       {/* Câmera */}
       <div className="app-gutter mx-auto flex min-h-48 w-full max-w-md flex-1 flex-col pt-4">
-        <div className="relative min-h-0 flex-1 overflow-hidden rounded-xl bg-ink">
+        <div className="relative min-h-0 flex-1 overflow-hidden rounded-[1.75rem] bg-black shadow-float">
           <video
             ref={videoRef}
             playsInline
@@ -262,7 +262,7 @@ export function CameraCapture({
           )}
 
           {processando && fase === "pronto" && (
-            <p className="absolute inset-x-0 bottom-0 bg-ink/70 px-4 py-2.5 text-center text-sm font-medium text-white">
+            <p className="absolute inset-x-0 bottom-0 bg-black/60 px-4 py-2.5 backdrop-blur text-center text-sm font-medium text-white">
               {ocupado ? "Registrando…" : "Lendo seu rosto…"}
             </p>
           )}

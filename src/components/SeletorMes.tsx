@@ -3,7 +3,7 @@ import { ArrowLeft, ArrowRight } from "./icons";
 import { rotuloMes, somarMes } from "@/lib/banco";
 
 const seta =
-  "flex h-11 w-11 items-center justify-center rounded-lg border border-line-strong bg-surface text-ink transition-colors hover:border-ink-3";
+  "flex h-11 w-11 items-center justify-center toque rounded-full bg-surface text-ink shadow-card hover:bg-sunken";
 
 /** Navegação de mês: ‹ Novembro de 2026 ›. Não avança além do mês atual. */
 export function SeletorMes({

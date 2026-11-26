@@ -6,7 +6,7 @@ import {
   type LinhaSolicitacao,
 } from "@/components/dash/ListaSolicitacoes";
 import { AvisoMigracao } from "@/components/dash/AvisoMigracao";
-import { Cartao } from "@/components/ui";
+import { Cartao, Segmentado } from "@/components/ui";
 import { contextoGestor } from "@/lib/relatorios";
 import { horaLocal } from "@/lib/ponto";
 import { COLUNAS_SOLICITACAO, type Solicitacao } from "@/lib/solicitacoes";
@@ -88,27 +88,13 @@ export default async function SolicitacoesRH({
         descricao="Pedidos de ajuste de ponto e abono feitos pelos colaboradores."
       />
 
-      <nav aria-label="Filtro" className="mb-4 flex gap-1 border-b border-line">
-        {ABAS.map((a) => {
-          const on = a.id === aba;
-          return (
-            <Link
-              key={a.id}
-              href={a.id === "pendente" ? "/admin/solicitacoes" : "/admin/solicitacoes?aba=respondidas"}
-              aria-current={on ? "page" : undefined}
-              className={`relative px-3 py-2.5 text-sm font-medium ${on ? "text-brand" : "text-ink-2 hover:text-ink"}`}
-            >
-              {a.rotulo}
-              {a.id === "pendente" && (count ?? 0) > 0 && (
-                <span className="ml-1.5 rounded-full bg-warn-tint px-1.5 py-0.5 text-xs font-semibold text-warn">
-                  {count}
-                </span>
-              )}
-              {on && <span className="absolute inset-x-3 -bottom-px h-0.5 rounded-full bg-brand" />}
-            </Link>
-          );
-        })}
-      </nav>
+      <Segmentado
+        ativo={aba}
+        itens={[
+          { id: "pendente", rotulo: "Pendentes", href: "/admin/solicitacoes", contador: count ?? 0 },
+          { id: "respondidas", rotulo: "Respondidas", href: "/admin/solicitacoes?aba=respondidas" },
+        ]}
+      />
 
       {linhas.length === 0 ? (
         <Cartao className="px-5 py-12 text-center">

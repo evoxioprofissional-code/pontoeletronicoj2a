@@ -85,7 +85,7 @@ export function RelatoriosView({
                 <li key={p.id}>
                   <Link
                     href={`/admin/espelho/${p.id}?mes=${mes}`}
-                    className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-paper sm:px-5"
+                    className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-sunken/60 sm:px-5"
                   >
                     <Avatar nome={p.nome} tamanho="sm" />
                     <span className="min-w-0 flex-1 truncate font-medium text-ink">

@@ -82,14 +82,14 @@ export function FormTurno({
 
       <fieldset>
         <legend className="mb-2 text-sm font-medium text-ink-2">Dias e horários</legend>
-        <div className="overflow-hidden rounded-lg border border-line">
+        <div className="overflow-hidden rounded-2xl bg-sunken/60">
           {ORDEM.map((i) => {
             const d = escala[i];
             return (
               <div
                 key={i}
                 className={`flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line px-3 py-2.5 last:border-b-0 sm:px-4 ${
-                  d ? "bg-surface" : "bg-paper"
+                  d ? "bg-surface" : "bg-sunken/50"
                 }`}
               >
                 <label className="flex w-28 items-center gap-2.5">
@@ -98,7 +98,7 @@ export function FormTurno({
                     name={`d${i}_ativo`}
                     checked={Boolean(d)}
                     onChange={(e) => mudar(i, e.target.checked ? {} : null)}
-                    className="h-4 w-4 accent-[#0E4F5E]"
+                    className="h-4 w-4"
                   />
                   <span className={`font-medium ${d ? "text-ink" : "text-ink-3"}`}>
                     {NOMES_SEMANA[i]}

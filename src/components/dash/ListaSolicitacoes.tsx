@@ -130,7 +130,7 @@ export function ListaSolicitacoes({
       }}
     >
       {pendentes && (
-        <div className="mb-3 flex flex-col gap-3 rounded-xl border border-line bg-surface p-4 sm:flex-row sm:items-end">
+        <div className="mb-3 flex flex-col gap-3 rounded-card bg-surface shadow-card p-4 sm:flex-row sm:items-end">
           <label className="flex min-w-0 flex-1 flex-col gap-1.5">
             <span className="text-sm font-medium text-ink-2">
               Resposta para a pessoa{" "}
@@ -150,16 +150,16 @@ export function ListaSolicitacoes({
       {state.error && <Aviso tom="erro" className="mb-3">{state.error}</Aviso>}
       {state.ok && <Aviso tom="ok" className="mb-3">{state.ok}</Aviso>}
 
-      <div className="overflow-hidden rounded-xl border border-line bg-surface">
+      <div className="overflow-hidden rounded-card bg-surface shadow-card">
         {pendentes && (
-          <label className="flex items-center gap-3 border-b border-line bg-paper px-4 py-2.5 text-sm text-ink-2 sm:px-5">
+          <label className="flex items-center gap-3 border-b border-line px-4 py-3 text-sm text-ink-2 sm:px-5">
             <input
               type="checkbox"
               checked={todos}
               onChange={() =>
                 setSel(todos ? new Set() : new Set(linhas.map((l) => l.id)))
               }
-              className="h-4 w-4 accent-[#0E4F5E]"
+              className="h-4 w-4"
             />
             Selecionar todos ({linhas.length})
           </label>
@@ -175,7 +175,7 @@ export function ListaSolicitacoes({
                   checked={sel.has(s.id)}
                   onChange={() => alternar(s.id)}
                   aria-label={`Selecionar pedido de ${s.nome}`}
-                  className="mt-2.5 h-4 w-4 shrink-0 accent-[#0E4F5E]"
+                  className="mt-2.5 h-4 w-4 shrink-0"
                 />
               )}
               <Avatar nome={s.nome} />
@@ -204,7 +204,7 @@ export function ListaSolicitacoes({
                   {s.anexo_path && <BotaoAnexo id={s.id} />}
                 </div>
                 {s.resposta && (
-                  <p className="mt-2 rounded-md bg-paper px-3 py-2 text-sm text-ink-2">
+                  <p className="mt-2 rounded-xl bg-sunken px-3.5 py-2.5 text-sm text-ink-2">
                     <span className="font-medium text-ink">Resposta:</span> {s.resposta}
                   </p>
                 )}

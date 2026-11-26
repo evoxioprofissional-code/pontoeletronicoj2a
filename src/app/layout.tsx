@@ -1,20 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
+import { Inter } from "next/font/google";
 import { InstalacaoProvider } from "@/components/InstalacaoProvider";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import "./globals.css";
 
-const sans = IBM_Plex_Sans({
+const sans = Inter({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
   variable: "--font-sans",
-  display: "swap",
-});
-
-const mono = IBM_Plex_Mono({
-  subsets: ["latin"],
-  weight: ["500", "600"],
-  variable: "--font-mono",
   display: "swap",
 });
 
@@ -34,7 +26,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#F6F4F0",
+  themeColor: "#F4F6F7",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -46,7 +38,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR" className={`${sans.variable} ${mono.variable}`}>
+    <html lang="pt-BR" className={sans.variable}>
       <body className="min-h-screen font-sans antialiased">
         <InstalacaoProvider>{children}</InstalacaoProvider>
         <ServiceWorkerRegister />

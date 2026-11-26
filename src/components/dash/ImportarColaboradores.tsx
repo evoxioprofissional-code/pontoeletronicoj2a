@@ -83,7 +83,7 @@ export function ImportarColaboradores() {
             {falhas.length > 0 && `, ${falhas.length} com problema (veja abaixo)`}.
           </Aviso>
           {ok.length > 0 && (
-            <div className="rounded-lg border border-warn-line bg-warn-tint p-4 text-sm text-ink-2">
+            <div className="rounded-2xl bg-warn-tint p-4 text-sm text-ink-2">
               <p className="font-semibold text-ink">Guarde as senhas iniciais agora.</p>
               <p className="mt-1">
                 Elas não aparecem de novo. Baixe a lista e entregue a cada pessoa.
@@ -94,7 +94,7 @@ export function ImportarColaboradores() {
             </div>
           )}
           {falhas.length > 0 && (
-            <ul className="divide-y divide-line rounded-lg border border-line text-sm">
+            <ul className="divide-y divide-line rounded-2xl bg-sunken/60 text-sm">
               {falhas.map((l) => (
                 <li key={l.linha} className="flex flex-wrap gap-x-3 px-3 py-2">
                   <span className="num text-ink-3">linha {l.linha}</span>
